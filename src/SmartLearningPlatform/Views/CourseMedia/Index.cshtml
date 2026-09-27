@@ -1,0 +1,60 @@
+@model IReadOnlyList<CourseMedia>
+@{
+    ViewData["Title"] = "Course media";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="h3 mb-1">Course media</h1>
+        <p class="text-secondary mb-0 small">
+            The <code>course_media</code> satellite — one row per course, sharing its key.
+        </p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">New media row</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-light border">
+        No media rows yet. Create a <a asp-controller="Courses" asp-action="Index">course</a> first.
+    </div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var media in Model)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100 shadow-sm">
+                    @if (media.HasThumbnail)
+                    {
+                        <img src="@media.ThumbnailUrl" class="card-img-top" alt="thumbnail"
+                             style="height: 150px; object-fit: cover;" />
+                    }
+                    else
+                    {
+                        <div class="bg-body-secondary d-flex align-items-center justify-content-center"
+                             style="height: 150px;">
+                            <span class="text-secondary small">No thumbnail</span>
+                        </div>
+                    }
+                    <div class="card-body">
+                        <h2 class="h6 mb-2">
+                            <a asp-action="Details" asp-route-id="@media.CourseId">
+                                @(media.Course?.Title ?? $"Course #{media.CourseId}")
+                            </a>
+                        </h2>
+                        <ul class="list-unstyled small text-secondary mb-0">
+                            <li>Promo video: @(media.PromotionalLessonUrl is null ? "—" : "set")</li>
+                            <li>Certificate template: @(media.CertificateTemplateUrl is null ? "—" : "set")</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer bg-white text-end">
+                        <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@media.CourseId">Edit</a>
+                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@media.CourseId">Delete</a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

@@ -1,0 +1,62 @@
+@model UserFormViewModel
+@*
+    Fields shared by Create and Edit. The password pair is required on Create and
+    optional on Edit, where an empty box means "keep the current password".
+*@
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" autocomplete="email" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="PhoneNumber" class="form-label"></label>
+        <input asp-for="PhoneNumber" class="form-control" autocomplete="tel" />
+        <span asp-validation-for="PhoneNumber" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="Password" class="text-danger small"></span>
+        @if (Model.IsEdit)
+        {
+            <div class="form-text">Leave blank to keep the current password.</div>
+        }
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="ConfirmPassword" class="form-label"></label>
+        <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select" asp-items="Html.GetEnumSelectList<UserStatus>()"></select>
+        <span asp-validation-for="Status" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="FailedLoginAttempt" class="form-label"></label>
+        <input asp-for="FailedLoginAttempt" class="form-control" type="number" min="0" />
+        <span asp-validation-for="FailedLoginAttempt" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="AccountLockedUntil" class="form-label"></label>
+        <input asp-for="AccountLockedUntil" class="form-control" type="datetime-local" />
+        <span asp-validation-for="AccountLockedUntil" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <div class="form-check">
+            <input asp-for="Enabled" class="form-check-input" />
+            <label asp-for="Enabled" class="form-check-label"></label>
+        </div>
+    </div>
+</div>

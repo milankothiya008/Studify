@@ -1,0 +1,62 @@
+import axios from "axios";
+
+// Address of the .NET backend. You can change it in a ".env" file (see .env.example).
+export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// One axios object for all API calls. Every URL starts with /api
+const api = axios.create({
+  baseURL: API_URL + "/api",
+});
+
+// Before every request: add the login token (if the user is logged in).
+api.interceptors.request.use(function (config) {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = "Bearer " + token;
+  }
+  return config;
+});
+
+// After every response: if the token has expired, log the user out.
+api.interceptors.response.use(
+  function (response) {
+    return response;
+  },
+  function (error) {
+    const hadToken = localStorage.getItem("token");
+    if (error.response && error.response.status === 401 && hadToken) {
+      localStorage.removeItem("token");
+      // "/auth/me" is checked when the app starts; AuthContext handles that one itself.
+      if (error.config.url !== "/auth/me") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Turns any API error into a message we can show on the screen.
+export function getErrorMessage(error) {
+  if (error.response && error.response.data) {
+    const data = error.response.data;
+
+    // Our own errors look like { message: "..." }
+    if (data.message) {
+      return data.message;
+    }
+
+    // ASP.NET validation errors look like { errors: { Email: ["..."] } }
+    if (data.errors) {
+      const firstField = Object.keys(data.errors)[0];
+      return data.errors[firstField][0];
+    }
+  }
+
+  if (!error.response) {
+    return "Cannot reach the server. Is the backend running on " + API_URL + "?";
+  }
+
+  return "Something went wrong. Please try again.";
+}
+
+export default api;

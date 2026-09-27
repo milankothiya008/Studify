@@ -1,0 +1,44 @@
+@model Course
+@{
+    ViewData["Title"] = $"Retire {Model.Title}";
+}
+
+<h1 class="h3 mb-3">Retire this course?</h1>
+
+<div class="alert alert-warning">
+    The course is <strong>soft-deleted</strong> — its <code>deleted_at</code> column is
+    stamped. Its details, media and pricing rows stay on disk and return with it.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Title</dt>
+            <dd class="col-sm-9">@Model.Title</dd>
+
+            <dt class="col-sm-3">Subtitle</dt>
+            <dd class="col-sm-9">@Model.Subtitle</dd>
+
+            <dt class="col-sm-3">Instructor</dt>
+            <dd class="col-sm-9">@(Model.Instructor?.DisplayName ?? $"#{Model.InstructorId}")</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                <span class="badge text-bg-@Model.CourseStatus.BadgeClass()">@Model.CourseStatus</span>
+            </dd>
+
+            <dt class="col-sm-3">Satellites</dt>
+            <dd class="col-sm-9 small">
+                Details: @(Model.Detail is null ? "none" : "present") &middot;
+                Media: @(Model.Media is null ? "none" : "present") &middot;
+                Pricing: @(Model.Pricing is null ? "none" : "present")
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Retire course</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+</form>

@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Privacy";
+}
+
+<h1 class="h3 mb-3">Privacy</h1>
+
+<p>
+    This application stores account details, profiles and course records in a PostgreSQL
+    database that you control. Nothing is sent anywhere else.
+</p>
+
+<p class="text-secondary small">
+    Passwords are never stored in plain text — only a PBKDF2 hash produced by
+    <code>PasswordHasher&lt;User&gt;</code> is written to the <code>users</code> table.
+</p>
+
+<p class="text-secondary small mb-0">
+    Signing in sets one cookie, which identifies your account for the length of the
+    session and nothing else. It is not used for tracking, and signing out discards it.
+</p>

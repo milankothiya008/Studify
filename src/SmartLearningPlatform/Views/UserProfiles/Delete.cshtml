@@ -1,0 +1,35 @@
+@model UserProfile
+@{
+    ViewData["Title"] = $"Delete {Model.FullName}";
+}
+
+<h1 class="h3 mb-3">Delete this profile?</h1>
+
+<div class="alert alert-danger">
+    The <code>user_profiles</code> row has no <code>deleted_at</code> column, so this is a
+    real delete. The user account itself is untouched and can be given a new profile.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9">@Model.FullName</dd>
+
+            <dt class="col-sm-3">User</dt>
+            <dd class="col-sm-9">@(Model.User?.Email ?? Model.UserId.ToString())</dd>
+
+            <dt class="col-sm-3">Profession</dt>
+            <dd class="col-sm-9">@(Model.Profession?.ToString() ?? "—")</dd>
+
+            <dt class="col-sm-3">Institute</dt>
+            <dd class="col-sm-9">@(Model.InstituteName ?? "—")</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.UserId" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Delete profile</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.UserId">Cancel</a>
+</form>

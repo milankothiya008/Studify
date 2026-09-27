@@ -1,0 +1,26 @@
+@model RoleAuthority
+@{
+    var roleList = ViewData["RoleList"] as SelectList;
+    var authorityList = ViewData["AuthorityList"] as SelectList;
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="RoleId" class="form-label"></label>
+        <select asp-for="RoleId" class="form-select" asp-items="roleList">
+            <option value="">Select a role…</option>
+        </select>
+        <span asp-validation-for="RoleId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="AuthorityId" class="form-label"></label>
+        <select asp-for="AuthorityId" class="form-select" asp-items="authorityList">
+            <option value="">Select an authority…</option>
+        </select>
+        <span asp-validation-for="AuthorityId" class="text-danger small"></span>
+        <div class="form-text">A role can hold each authority only once.</div>
+    </div>
+</div>

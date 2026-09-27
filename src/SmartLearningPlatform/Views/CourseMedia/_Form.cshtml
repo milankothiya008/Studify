@@ -1,0 +1,50 @@
+@model CourseMedia
+@{
+    var courseList = ViewData["CourseList"] as SelectList;
+    var isEdit = (bool)(ViewData["IsEdit"] ?? false);
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="alert alert-light border small">
+    The Java original stored these as foreign keys into a Cloudinary-backed
+    <code>files</code> table. With no File entity in this model set, each one is the URL
+    it resolved to.
+</div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <label asp-for="CourseId" class="form-label"></label>
+        @if (isEdit)
+        {
+            <input class="form-control" value="@(Model.Course?.Title ?? Model.CourseId.ToString())" disabled />
+            <input type="hidden" asp-for="CourseId" />
+        }
+        else
+        {
+            <select asp-for="CourseId" class="form-select" asp-items="courseList">
+                <option value="">Select a course…</option>
+            </select>
+            <div class="form-text">Only courses without a media row are listed.</div>
+        }
+        <span asp-validation-for="CourseId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="ThumbnailUrl" class="form-label"></label>
+        <input asp-for="ThumbnailUrl" class="form-control" placeholder="https://…" />
+        <span asp-validation-for="ThumbnailUrl" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="PromotionalLessonUrl" class="form-label"></label>
+        <input asp-for="PromotionalLessonUrl" class="form-control" placeholder="https://…" />
+        <span asp-validation-for="PromotionalLessonUrl" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="CertificateTemplateUrl" class="form-label"></label>
+        <input asp-for="CertificateTemplateUrl" class="form-control" placeholder="https://…" />
+        <span asp-validation-for="CertificateTemplateUrl" class="text-danger small"></span>
+    </div>
+</div>

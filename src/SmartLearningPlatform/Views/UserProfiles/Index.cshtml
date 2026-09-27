@@ -1,0 +1,54 @@
+@model IReadOnlyList<UserProfile>
+@{
+    ViewData["Title"] = "User profiles";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">User profiles</h1>
+    <a class="btn btn-primary" asp-action="Create">New profile</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-light border">
+        No profiles yet. A profile shares its primary key with a user, so create the
+        <a asp-controller="Users" asp-action="Index">user</a> first.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Profession</th>
+                        <th>Education</th>
+                        <th>Institute</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var profile in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@profile.UserId">@profile.FullName</a>
+                        </td>
+                        <td class="small text-secondary">@(profile.User?.Email ?? "—")</td>
+                        <td>@(profile.Profession?.ToString() ?? "—")</td>
+                        <td>@(profile.EducationLevel?.ToString() ?? "—")</td>
+                        <td>@(profile.InstituteName ?? "—")</td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@profile.UserId">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@profile.UserId">Delete</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

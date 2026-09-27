@@ -1,0 +1,63 @@
+@model IReadOnlyList<CourseDetail>
+@{
+    ViewData["Title"] = "Course details";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="h3 mb-1">Course details</h1>
+        <p class="text-secondary mb-0 small">
+            The <code>course_details</code> satellite — one row per course, sharing its key.
+        </p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">New details row</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-light border">
+        No details rows yet. Create a <a asp-controller="Courses" asp-action="Index">course</a> first.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Course</th>
+                        <th>Description</th>
+                        <th>Features</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var detail in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@detail.CourseId">
+                                @(detail.Course?.Title ?? $"#{detail.CourseId}")
+                            </a>
+                        </td>
+                        <td class="small text-secondary text-truncate" style="max-width: 320px;">
+                            @detail.Description
+                        </td>
+                        <td class="text-nowrap">
+                            @if (detail.HasCertificate) { <span class="badge text-bg-success">Cert</span> }
+                            @if (detail.HasAssignment) { <span class="badge text-bg-success">Assign</span> }
+                            @if (detail.HasProject) { <span class="badge text-bg-success">Project</span> }
+                            @if (detail.HasQuiz) { <span class="badge text-bg-success">Quiz</span> }
+                        </td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@detail.CourseId">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@detail.CourseId">Delete</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

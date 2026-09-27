@@ -1,0 +1,184 @@
+@model User
+@{
+    ViewData["Title"] = Model.DisplayName;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+    <div>
+        <h1 class="h3 mb-1">@Model.DisplayName</h1>
+        <div class="text-secondary">@Model.Email</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" asp-action="Index">Back</a>
+        <a class="btn btn-primary" asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white fw-semibold">Account</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Status</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge text-bg-@Model.Status.BadgeClass()">@Model.Status</span>
+                    </dd>
+
+                    <dt class="col-sm-5">Enabled</dt>
+                    <dd class="col-sm-7">@(Model.Enabled ? "Yes" : "No")</dd>
+
+                    <dt class="col-sm-5">Can sign in</dt>
+                    <dd class="col-sm-7">@(Model.CanSignIn ? "Yes" : "No")</dd>
+
+                    <dt class="col-sm-5">Phone number</dt>
+                    <dd class="col-sm-7">@(Model.PhoneNumber ?? "—")</dd>
+
+                    <dt class="col-sm-5">Failed logins</dt>
+                    <dd class="col-sm-7">@Model.FailedLoginAttempt</dd>
+
+                    <dt class="col-sm-5">Locked until</dt>
+                    <dd class="col-sm-7">@(Model.AccountLockedUntil?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
+
+                    <dt class="col-sm-5">Password changed</dt>
+                    <dd class="col-sm-7">@(Model.PasswordChangedAt?.ToString("yyyy-MM-dd HH:mm") ?? "—")</dd>
+
+                    <dt class="col-sm-5">Created</dt>
+                    <dd class="col-sm-7">@Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+
+                    <dt class="col-sm-5">Updated</dt>
+                    <dd class="col-sm-7">@Model.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Profile</span>
+                @if (Model.Profile is null)
+                {
+                    <a class="btn btn-sm btn-outline-primary"
+                       asp-controller="UserProfiles" asp-action="Create" asp-route-userId="@Model.Id">Add profile</a>
+                }
+                else
+                {
+                    <a class="btn btn-sm btn-outline-secondary"
+                       asp-controller="UserProfiles" asp-action="Edit" asp-route-id="@Model.Id">Edit profile</a>
+                }
+            </div>
+            <div class="card-body">
+                @if (Model.Profile is null)
+                {
+                    <p class="text-secondary small mb-0">This account has no profile row yet.</p>
+                }
+                else
+                {
+                    <dl class="row mb-0">
+                        <dt class="col-sm-5">Name</dt>
+                        <dd class="col-sm-7">@Model.Profile.FullName</dd>
+
+                        <dt class="col-sm-5">Profession</dt>
+                        <dd class="col-sm-7">@(Model.Profile.Profession?.ToString() ?? "—")</dd>
+
+                        <dt class="col-sm-5">Education</dt>
+                        <dd class="col-sm-7">@(Model.Profile.EducationLevel?.ToString() ?? "—")</dd>
+
+                        <dt class="col-sm-5">Institute</dt>
+                        <dd class="col-sm-7">@(Model.Profile.InstituteName ?? "—")</dd>
+
+                        @if (Model.Profile.Age is int age)
+                        {
+                            <dt class="col-sm-5">Age</dt>
+                            <dd class="col-sm-7">@age</dd>
+                        }
+
+                        @if (!Model.Profile.HomeAddress.IsEmpty)
+                        {
+                            <dt class="col-sm-5">Home</dt>
+                            <dd class="col-sm-7">@Model.Profile.HomeAddress.ToString()</dd>
+                        }
+                    </dl>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Roles</span>
+                <a class="btn btn-sm btn-outline-primary"
+                   asp-controller="UserRoles" asp-action="Create" asp-route-userId="@Model.Id">Assign</a>
+            </div>
+            @if (!Model.UserRoles.Any())
+            {
+                <div class="card-body text-secondary small">No roles assigned.</div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var userRole in Model.UserRoles.Where(ur => ur.Role is not null))
+                    {
+                        <li class="list-group-item">
+                            <div class="fw-semibold">@userRole.Role!.Name</div>
+                            @if (userRole.Role.RoleAuthorities.Any())
+                            {
+                                <div class="mt-1 d-flex flex-wrap gap-1">
+                                    @foreach (var grant in userRole.Role.RoleAuthorities.Where(g => g.Authority is not null))
+                                    {
+                                        <span class="badge text-bg-light border">@grant.Authority!.Name</span>
+                                    }
+                                </div>
+                            }
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="card shadow-sm mb-3">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Social links</span>
+                <a class="btn btn-sm btn-outline-primary"
+                   asp-controller="UserSocialLinks" asp-action="Create" asp-route-userId="@Model.Id">Add</a>
+            </div>
+            @if (!Model.SocialLinks.Any())
+            {
+                <div class="card-body text-secondary small">No links.</div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var link in Model.SocialLinks)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                            <span class="badge text-bg-secondary">@link.Platform</span>
+                            <a href="@link.Url" target="_blank" rel="noopener noreferrer"
+                               class="text-truncate small">@link.Url</a>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-white fw-semibold">Courses taught</div>
+            @if (!Model.CoursesTaught.Any())
+            {
+                <div class="card-body text-secondary small">None.</div>
+            }
+            else
+            {
+                <ul class="list-group list-group-flush">
+                    @foreach (var course in Model.CoursesTaught)
+                    {
+                        <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
+                            <a asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id">@course.Title</a>
+                            <span class="badge text-bg-@course.CourseStatus.BadgeClass()">@course.CourseStatus</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>

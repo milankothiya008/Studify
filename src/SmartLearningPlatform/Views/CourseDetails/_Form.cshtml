@@ -1,0 +1,74 @@
+@model CourseDetail
+@{
+    var courseList = ViewData["CourseList"] as SelectList;
+    var isEdit = (bool)(ViewData["IsEdit"] ?? false);
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <label asp-for="CourseId" class="form-label"></label>
+        @if (isEdit)
+        {
+            @* This row shares the course's primary key, so it cannot be reassigned. *@
+            <input class="form-control" value="@(Model.Course?.Title ?? Model.CourseId.ToString())" disabled />
+            <input type="hidden" asp-for="CourseId" />
+        }
+        else
+        {
+            <select asp-for="CourseId" class="form-select" asp-items="courseList">
+                <option value="">Select a course…</option>
+            </select>
+            <div class="form-text">Only courses without a details row are listed.</div>
+        }
+        <span asp-validation-for="CourseId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Description" class="form-label"></label>
+        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
+        <span asp-validation-for="Description" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Requirement" class="form-label"></label>
+        <textarea asp-for="Requirement" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="Requirement" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="LearningOutcome" class="form-label"></label>
+        <textarea asp-for="LearningOutcome" class="form-control" rows="4"></textarea>
+        <span asp-validation-for="LearningOutcome" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <div class="row g-2">
+            <div class="col-sm-3">
+                <div class="form-check">
+                    <input asp-for="HasCertificate" class="form-check-input" />
+                    <label asp-for="HasCertificate" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="form-check">
+                    <input asp-for="HasAssignment" class="form-check-input" />
+                    <label asp-for="HasAssignment" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="form-check">
+                    <input asp-for="HasProject" class="form-check-input" />
+                    <label asp-for="HasProject" class="form-check-label"></label>
+                </div>
+            </div>
+            <div class="col-sm-3">
+                <div class="form-check">
+                    <input asp-for="HasQuiz" class="form-check-input" />
+                    <label asp-for="HasQuiz" class="form-check-label"></label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

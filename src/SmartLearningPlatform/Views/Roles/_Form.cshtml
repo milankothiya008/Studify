@@ -1,0 +1,18 @@
+@model Role
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control font-monospace" placeholder="ROLE_INSTRUCTOR" />
+        <span asp-validation-for="Name" class="text-danger small"></span>
+        <div class="form-text">Upper-case letters, digits and underscores.</div>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="Description" class="form-label"></label>
+        <input asp-for="Description" class="form-control" />
+        <span asp-validation-for="Description" class="text-danger small"></span>
+    </div>
+</div>

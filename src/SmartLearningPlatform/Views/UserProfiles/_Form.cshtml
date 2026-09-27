@@ -1,0 +1,155 @@
+@model UserProfile
+@{
+    var userList = ViewData["UserList"] as SelectList;
+    var isEdit = (bool)(ViewData["IsEdit"] ?? false);
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="UserId" class="form-label"></label>
+        @if (isEdit)
+        {
+            @* The profile's key is the user's key, so it cannot move once created. *@
+            <input class="form-control" value="@(Model.User?.Email ?? Model.UserId.ToString())" disabled />
+            <input type="hidden" asp-for="UserId" />
+            <div class="form-text">A profile shares its primary key with its user and cannot be reassigned.</div>
+        }
+        else
+        {
+            <select asp-for="UserId" class="form-select" asp-items="userList">
+                <option value="">Select a user…</option>
+            </select>
+            <div class="form-text">Only users without a profile are listed.</div>
+        }
+        <span asp-validation-for="UserId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="FirstName" class="form-label"></label>
+        <input asp-for="FirstName" class="form-control" />
+        <span asp-validation-for="FirstName" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="LastName" class="form-label"></label>
+        <input asp-for="LastName" class="form-control" />
+        <span asp-validation-for="LastName" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="AboutMe" class="form-label"></label>
+        <textarea asp-for="AboutMe" class="form-control" rows="3"></textarea>
+        <span asp-validation-for="AboutMe" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="EducationLevel" class="form-label"></label>
+        <select asp-for="EducationLevel" class="form-select"
+                asp-items="Html.GetEnumSelectList<SmartLearningPlatform.Models.Users.Enums.EducationLevel>()">
+            <option value="">Not specified</option>
+        </select>
+        <span asp-validation-for="EducationLevel" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Profession" class="form-label"></label>
+        <select asp-for="Profession" class="form-select"
+                asp-items="Html.GetEnumSelectList<SmartLearningPlatform.Models.Users.Enums.Profession>()">
+            <option value="">Not specified</option>
+        </select>
+        <span asp-validation-for="Profession" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Gender" class="form-label"></label>
+        <select asp-for="Gender" class="form-select"
+                asp-items="Html.GetEnumSelectList<SmartLearningPlatform.Models.Users.Enums.Gender>()">
+            <option value="">Not specified</option>
+        </select>
+        <span asp-validation-for="Gender" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="DateOfBirth" class="form-label"></label>
+        <input asp-for="DateOfBirth" class="form-control" type="date" />
+        <span asp-validation-for="DateOfBirth" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-8">
+        <label asp-for="InstituteName" class="form-label"></label>
+        <input asp-for="InstituteName" class="form-control" />
+        <span asp-validation-for="InstituteName" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="ProfilePictureUrl" class="form-label"></label>
+        <input asp-for="ProfilePictureUrl" class="form-control" placeholder="https://…" />
+        <span asp-validation-for="ProfilePictureUrl" class="text-danger small"></span>
+    </div>
+</div>
+
+<hr class="my-4" />
+
+<div class="row g-4">
+    <div class="col-lg-6">
+        <h2 class="h6 text-uppercase text-secondary">Home address</h2>
+        <div class="row g-2">
+            <div class="col-12">
+                <label asp-for="HomeAddress.Street" class="form-label">Street</label>
+                <input asp-for="HomeAddress.Street" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="HomeAddress.City" class="form-label">City</label>
+                <input asp-for="HomeAddress.City" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="HomeAddress.State" class="form-label">State</label>
+                <input asp-for="HomeAddress.State" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="HomeAddress.PostalCode" class="form-label">Postal code</label>
+                <input asp-for="HomeAddress.PostalCode" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="HomeAddress.Country" class="form-label">Country</label>
+                <input asp-for="HomeAddress.Country" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label asp-for="HomeAddress.FullAddress" class="form-label">Full address</label>
+                <input asp-for="HomeAddress.FullAddress" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <h2 class="h6 text-uppercase text-secondary">Work address</h2>
+        <div class="row g-2">
+            <div class="col-12">
+                <label asp-for="WorkAddress.Street" class="form-label">Street</label>
+                <input asp-for="WorkAddress.Street" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="WorkAddress.City" class="form-label">City</label>
+                <input asp-for="WorkAddress.City" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="WorkAddress.State" class="form-label">State</label>
+                <input asp-for="WorkAddress.State" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="WorkAddress.PostalCode" class="form-label">Postal code</label>
+                <input asp-for="WorkAddress.PostalCode" class="form-control" />
+            </div>
+            <div class="col-md-6">
+                <label asp-for="WorkAddress.Country" class="form-label">Country</label>
+                <input asp-for="WorkAddress.Country" class="form-control" />
+            </div>
+            <div class="col-12">
+                <label asp-for="WorkAddress.FullAddress" class="form-label">Full address</label>
+                <input asp-for="WorkAddress.FullAddress" class="form-control" />
+            </div>
+        </div>
+    </div>
+</div>

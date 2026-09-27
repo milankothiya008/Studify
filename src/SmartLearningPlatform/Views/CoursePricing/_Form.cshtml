@@ -1,0 +1,46 @@
+@model CoursePricing
+@{
+    var courseList = ViewData["CourseList"] as SelectList;
+    var isEdit = (bool)(ViewData["IsEdit"] ?? false);
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <label asp-for="CourseId" class="form-label"></label>
+        @if (isEdit)
+        {
+            <input class="form-control" value="@(Model.Course?.Title ?? Model.CourseId.ToString())" disabled />
+            <input type="hidden" asp-for="CourseId" />
+        }
+        else
+        {
+            <select asp-for="CourseId" class="form-select" asp-items="courseList">
+                <option value="">Select a course…</option>
+            </select>
+            <div class="form-text">Only courses without a pricing row are listed.</div>
+        }
+        <span asp-validation-for="CourseId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Price" class="form-label"></label>
+        <input asp-for="Price" class="form-control" type="number" step="0.01" min="0" />
+        <span asp-validation-for="Price" class="text-danger small"></span>
+        <div class="form-text">0 makes the course free.</div>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="DiscountPrice" class="form-label"></label>
+        <input asp-for="DiscountPrice" class="form-control" type="number" step="0.01" min="0" />
+        <span asp-validation-for="DiscountPrice" class="text-danger small"></span>
+        <div class="form-text">Must not exceed the price. 0 means no discount.</div>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="Currency" class="form-label"></label>
+        <select asp-for="Currency" class="form-select" asp-items="Html.GetEnumSelectList<CurrencyCode>()"></select>
+        <span asp-validation-for="Currency" class="text-danger small"></span>
+    </div>
+</div>

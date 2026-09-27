@@ -1,0 +1,144 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+    <div>
+        <h1 class="h3 mb-1">Dashboard</h1>
+        <p class="text-secondary mb-0">
+            Users, roles and courses ported from the Spring Boot original.
+        </p>
+    </div>
+</div>
+
+@if (!Model.DatabaseAvailable)
+{
+    <div class="alert alert-warning">
+        <h2 class="h6 alert-heading">The database is not reachable</h2>
+        <p class="mb-2 small">
+            Start PostgreSQL and apply the migrations, then reload this page:
+        </p>
+<pre class="small bg-body-secondary p-2 rounded mb-2"><code>dotnet ef database update --project src/SmartLearningPlatform</code></pre>
+        <p class="mb-0 small text-secondary">@Model.DatabaseError</p>
+    </div>
+    return;
+}
+
+<div class="row g-3 mb-4">
+    @foreach (var card in new[]
+    {
+        ("Users", Model.UserCount, "Users", "Index"),
+        ("Courses", Model.CourseCount, "Courses", "Index"),
+        ("Roles", Model.RoleCount, "Roles", "Index"),
+        ("Authorities", Model.AuthorityCount, "Authorities", "Index"),
+    })
+    {
+        <div class="col-6 col-lg-3">
+            <a class="card h-100 text-decoration-none shadow-sm"
+               asp-controller="@card.Item3" asp-action="@card.Item4">
+                <div class="card-body">
+                    <div class="text-secondary small text-uppercase">@card.Item1</div>
+                    <div class="display-6 fw-semibold text-body">@card.Item2</div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Users by status</div>
+            <div class="card-body">
+                @if (Model.UsersByStatus.Count == 0)
+                {
+                    <p class="text-secondary mb-0 small">No users yet.</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var entry in Model.UsersByStatus.OrderByDescending(e => e.Value))
+                        {
+                            <li class="d-flex justify-content-between align-items-center py-1">
+                                <span class="badge text-bg-@entry.Key.BadgeClass()">@entry.Key</span>
+                                <span class="fw-semibold">@entry.Value</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white fw-semibold">Courses by status</div>
+            <div class="card-body">
+                @if (Model.CoursesByStatus.Count == 0)
+                {
+                    <p class="text-secondary mb-0 small">No courses yet.</p>
+                }
+                else
+                {
+                    <ul class="list-unstyled mb-0">
+                        @foreach (var entry in Model.CoursesByStatus.OrderByDescending(e => e.Value))
+                        {
+                            <li class="d-flex justify-content-between align-items-center py-1">
+                                <span class="badge text-bg-@entry.Key.BadgeClass()">@entry.Key</span>
+                                <span class="fw-semibold">@entry.Value</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">Recently published courses</span>
+        <a class="btn btn-sm btn-outline-secondary" asp-controller="Courses" asp-action="Index">
+            All courses
+        </a>
+    </div>
+
+    @if (Model.RecentPublishedCourses.Count == 0)
+    {
+        <div class="card-body text-secondary small">
+            Nothing published yet. Create a course, add its details, media and pricing,
+            then move it to Published.
+        </div>
+    }
+    else
+    {
+        <div class="list-group list-group-flush">
+            @foreach (var course in Model.RecentPublishedCourses)
+            {
+                <a class="list-group-item list-group-item-action"
+                   asp-controller="Courses" asp-action="Details" asp-route-id="@course.Id">
+                    <div class="d-flex justify-content-between align-items-start gap-3">
+                        <div>
+                            <div class="fw-semibold">@course.Title</div>
+                            <div class="small text-secondary">@course.Subtitle</div>
+                            <div class="small text-secondary mt-1">
+                                @course.CourseLevel
+                                @if (course.Instructor is not null)
+                                {
+                                    <span>&middot; @course.Instructor.DisplayName</span>
+                                }
+                            </div>
+                        </div>
+                        @if (course.Pricing is not null)
+                        {
+                            <span class="text-nowrap fw-semibold">
+                                @course.Pricing.Currency.Format(course.Pricing.EffectivePrice)
+                            </span>
+                        }
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</div>

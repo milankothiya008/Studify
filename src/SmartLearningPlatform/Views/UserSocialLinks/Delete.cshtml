@@ -1,0 +1,32 @@
+@model UserSocialLink
+@{
+    ViewData["Title"] = "Remove social link";
+}
+
+<h1 class="h3 mb-3">Remove this link?</h1>
+
+<div class="alert alert-warning">
+    The link is <strong>soft-deleted</strong> — its <code>deleted_at</code> column is stamped,
+    which also frees the platform slot so the same user can add a new link for it.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">User</dt>
+            <dd class="col-sm-9">@(Model.User?.DisplayName ?? $"#{Model.UserId}")</dd>
+
+            <dt class="col-sm-3">Platform</dt>
+            <dd class="col-sm-9">@Model.Platform</dd>
+
+            <dt class="col-sm-3">URL</dt>
+            <dd class="col-sm-9 text-break">@Model.Url</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Remove link</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+</form>

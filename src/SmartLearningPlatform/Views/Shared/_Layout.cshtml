@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] &middot; Smart Learning Platform</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="d-flex flex-column min-vh-100 bg-body-tertiary">
+    <header>
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark border-bottom shadow-sm">
+            <div class="container-xl">
+                <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">
+                    Smart Learning Platform
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                        data-bs-target="#mainNav" aria-controls="mainNav"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="collapse navbar-collapse" id="mainNav">
+                    @* Every screen behind the nav requires a signed-in user, so the
+                       menus only appear once there is one. *@
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">Dashboard</a>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">Users</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="Users" asp-action="Index">Users</a></li>
+                                    <li><a class="dropdown-item" asp-controller="UserProfiles" asp-action="Index">Profiles</a></li>
+                                    <li><a class="dropdown-item" asp-controller="UserSocialLinks" asp-action="Index">Social links</a></li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">Access</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="Roles" asp-action="Index">Roles</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Authorities" asp-action="Index">Authorities</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" asp-controller="UserRoles" asp-action="Index">User &rarr; role</a></li>
+                                    <li><a class="dropdown-item" asp-controller="RoleAuthorities" asp-action="Index">Role &rarr; authority</a></li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button"
+                                   data-bs-toggle="dropdown" aria-expanded="false">Courses</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-controller="Courses" asp-action="Index">Courses</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" asp-controller="CourseDetails" asp-action="Index">Details</a></li>
+                                    <li><a class="dropdown-item" asp-controller="CourseMedia" asp-action="Index">Media</a></li>
+                                    <li><a class="dropdown-item" asp-controller="CoursePricing" asp-action="Index">Pricing</a></li>
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a class="btn btn-sm btn-outline-light me-3" asp-controller="Courses" asp-action="Create">
+                            New course
+                        </a>
+
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle text-white" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                @(User.FindFirst(ApplicationClaimTypes.DisplayName)?.Value ?? User.Identity!.Name)
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li>
+                                    <span class="dropdown-item-text small text-secondary">
+                                        @User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value
+                                    </span>
+                                </li>
+                                @foreach (var role in User.FindAll(System.Security.Claims.ClaimTypes.Role))
+                                {
+                                    <li><span class="dropdown-item-text small font-monospace">@role.Value</span></li>
+                                }
+                                <li><hr class="dropdown-divider" /></li>
+                                <li>
+                                    <form asp-controller="Account" asp-action="Logout" method="post">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="dropdown-item">Sign out</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="btn btn-sm btn-outline-light" asp-controller="Account" asp-action="Login">
+                            Sign in
+                        </a>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container-xl flex-grow-1 py-4">
+        <partial name="_Alerts" />
+        @RenderBody()
+    </main>
+
+    <footer class="border-top py-3 mt-auto bg-white">
+        <div class="container-xl d-flex flex-wrap justify-content-between small text-secondary">
+            <span>Smart Learning Platform &middot; ASP.NET Core MVC + PostgreSQL</span>
+            <a asp-controller="Home" asp-action="Privacy" class="text-secondary">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

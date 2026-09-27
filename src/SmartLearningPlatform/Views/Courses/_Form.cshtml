@@ -1,0 +1,41 @@
+@model Course
+@{
+    var instructorList = ViewData["InstructorList"] as SelectList;
+}
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="InstructorId" class="form-label"></label>
+        <select asp-for="InstructorId" class="form-select" asp-items="instructorList">
+            <option value="">Select an instructor…</option>
+        </select>
+        <span asp-validation-for="InstructorId" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="CourseLevel" class="form-label"></label>
+        <select asp-for="CourseLevel" class="form-select" asp-items="Html.GetEnumSelectList<CourseLevel>()"></select>
+        <span asp-validation-for="CourseLevel" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="CourseStatus" class="form-label"></label>
+        <select asp-for="CourseStatus" class="form-select" asp-items="Html.GetEnumSelectList<CourseStatus>()"></select>
+        <span asp-validation-for="CourseStatus" class="text-danger small"></span>
+        <div class="form-text">Details, media and pricing are needed before leaving Draft.</div>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Title" class="form-label"></label>
+        <input asp-for="Title" class="form-control" />
+        <span asp-validation-for="Title" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Subtitle" class="form-label"></label>
+        <input asp-for="Subtitle" class="form-control" />
+        <span asp-validation-for="Subtitle" class="text-danger small"></span>
+    </div>
+</div>

@@ -1,0 +1,28 @@
+@{
+    ViewData["Title"] = "Access denied";
+    Layout = "_Layout";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card card-body shadow-sm">
+            <h1 class="h4">Access denied</h1>
+            <p class="text-secondary mb-3">
+                You are signed in, but your roles do not grant the authority this
+                screen needs. An administrator can grant it on the
+                <strong>Access &rarr; Role &rarr; authority</strong> screen; the change
+                takes effect the next time you sign in.
+            </p>
+
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">
+                    Back to dashboard
+                </a>
+                <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger">Sign out</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,75 @@
+@model IReadOnlyList<CoursePricing>
+@{
+    ViewData["Title"] = "Course pricing";
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="h3 mb-1">Course pricing</h1>
+        <p class="text-secondary mb-0 small">
+            The <code>course_pricing</code> satellite — <code>numeric(10,2)</code>, one row per course.
+        </p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">New pricing row</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-light border">
+        No pricing rows yet. Create a <a asp-controller="Courses" asp-action="Index">course</a> first.
+    </div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Course</th>
+                        <th class="text-end">Price</th>
+                        <th class="text-end">Discount</th>
+                        <th class="text-end">Effective</th>
+                        <th>Currency</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var pricing in Model)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@pricing.CourseId">
+                                @(pricing.Course?.Title ?? $"#{pricing.CourseId}")
+                            </a>
+                        </td>
+                        <td class="text-end">@pricing.Price.ToString("N2")</td>
+                        <td class="text-end">
+                            @pricing.DiscountPrice.ToString("N2")
+                            @if (pricing.DiscountPercentage is int percent)
+                            {
+                                <span class="badge text-bg-danger ms-1">@percent%</span>
+                            }
+                        </td>
+                        <td class="text-end fw-semibold">
+                            @if (pricing.IsFree)
+                            {
+                                <span class="text-success">Free</span>
+                            }
+                            else
+                            {
+                                @pricing.EffectivePrice.ToString("N2")
+                            }
+                        </td>
+                        <td><span class="badge text-bg-light border">@pricing.Currency</span></td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@pricing.CourseId">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@pricing.CourseId">Delete</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

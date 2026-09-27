@@ -1,0 +1,20 @@
+@model Course
+@{
+    ViewData["Title"] = "New course";
+}
+
+<h1 class="h3 mb-3">New course</h1>
+
+<form asp-action="Create" method="post" class="card card-body shadow-sm">
+    @Html.AntiForgeryToken()
+    <partial name="_Form" model="Model" view-data="ViewData" />
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Create course</button>
+        <a class="btn btn-outline-secondary" asp-action="Index">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

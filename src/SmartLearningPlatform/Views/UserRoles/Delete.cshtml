@@ -1,0 +1,29 @@
+@model UserRole
+@{
+    ViewData["Title"] = "Unassign role";
+}
+
+<h1 class="h3 mb-3">Unassign this role?</h1>
+
+<div class="alert alert-warning">
+    A join row carries no history worth keeping, so this deletes the
+    <code>user_roles</code> row outright. The user and the role both survive.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">User</dt>
+            <dd class="col-sm-9">@(Model.User?.DisplayName ?? $"#{Model.UserId}")</dd>
+
+            <dt class="col-sm-3">Role</dt>
+            <dd class="col-sm-9"><code>@(Model.Role?.Name ?? $"#{Model.RoleId}")</code></dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Unassign role</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+</form>

@@ -1,0 +1,43 @@
+@model Role
+@{
+    ViewData["Title"] = $"Retire {Model.Name}";
+}
+
+<h1 class="h3 mb-3">Retire this role?</h1>
+
+<div class="alert alert-warning">
+    The role is <strong>soft-deleted</strong>, so existing <code>user_roles</code> rows keep
+    pointing at a row that still exists. Users holding it lose its authorities from every
+    list, because the role no longer appears.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9"><code>@Model.Name</code></dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@(Model.Description ?? "—")</dd>
+
+            <dt class="col-sm-3">Authorities</dt>
+            <dd class="col-sm-9">
+                @if (Model.RoleAuthorities.Any())
+                {
+                    @string.Join(", ", Model.RoleAuthorities.Where(g => g.Authority is not null)
+                                            .Select(g => g.Authority!.Name))
+                }
+                else
+                {
+                    <span class="text-secondary">None</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Retire role</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+</form>

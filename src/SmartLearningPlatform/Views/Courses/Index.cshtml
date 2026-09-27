@@ -1,0 +1,95 @@
+@model PagedResult<Course>
+@{
+    ViewData["Title"] = "Courses";
+    var instructorList = ViewData["InstructorList"] as SelectList;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">Courses</h1>
+    <a class="btn btn-primary" asp-action="Create">New course</a>
+</div>
+
+<form method="get" class="card card-body shadow-sm mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label" for="q">Search</label>
+            <input id="q" name="q" value="@ViewData["Query"]" class="form-control"
+                   placeholder="Title or subtitle" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label" for="status">Status</label>
+            <select id="status" name="status" class="form-select" asp-items="Html.GetEnumSelectList<CourseStatus>()">
+                <option value="">Any</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label" for="level">Level</label>
+            <select id="level" name="level" class="form-select" asp-items="Html.GetEnumSelectList<CourseLevel>()">
+                <option value="">Any</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label" for="instructorId">Instructor</label>
+            <select id="instructorId" name="instructorId" class="form-select" asp-items="instructorList">
+                <option value="">Any</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary flex-grow-1">Filter</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Reset</a>
+        </div>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <div class="alert alert-light border">No courses match this filter.</div>
+}
+else
+{
+    <div class="row g-3 mb-3">
+        @foreach (var course in Model.Items)
+        {
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100 shadow-sm">
+                    @if (course.Media?.HasThumbnail == true)
+                    {
+                        <img src="@course.Media.ThumbnailUrl" class="card-img-top" alt="@course.Title"
+                             style="height: 150px; object-fit: cover;" />
+                    }
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <span class="badge text-bg-@course.CourseStatus.BadgeClass()">@course.CourseStatus</span>
+                            <span class="badge text-bg-light border">@course.CourseLevel</span>
+                        </div>
+
+                        <h2 class="h6 mb-1">
+                            <a class="stretched-link text-decoration-none"
+                               asp-action="Details" asp-route-id="@course.Id">@course.Title</a>
+                        </h2>
+                        <p class="small text-secondary flex-grow-1">@course.Subtitle</p>
+
+                        <div class="d-flex justify-content-between align-items-center small">
+                            <span class="text-secondary">@(course.Instructor?.DisplayName ?? "—")</span>
+                            @if (course.Pricing is not null)
+                            {
+                                <span class="fw-semibold">
+                                    @if (course.Pricing.IsFree)
+                                    {
+                                        <span class="text-success">Free</span>
+                                    }
+                                    else
+                                    {
+                                        @course.Pricing.Currency.Format(course.Pricing.EffectivePrice)
+                                    }
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <partial name="_Pager" model="Model" />
+}

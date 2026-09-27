@@ -1,0 +1,6 @@
+bin/
+obj/
+
+# Files uploaded while Cloudinary is not configured
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep

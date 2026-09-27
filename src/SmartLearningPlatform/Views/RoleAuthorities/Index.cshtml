@@ -1,0 +1,95 @@
+@model IReadOnlyList<RoleAuthority>
+@{
+    ViewData["Title"] = "Role authorities";
+    var roleList = ViewData["RoleList"] as SelectList;
+    var authorityList = ViewData["AuthorityList"] as SelectList;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div>
+        <h1 class="h3 mb-1">Role &rarr; authority</h1>
+        <p class="text-secondary mb-0 small">
+            Rows in <code>role_authority</code>. One row per role and authority.
+        </p>
+    </div>
+    <a class="btn btn-primary" asp-action="Create">Grant authority</a>
+</div>
+
+<form method="get" class="card card-body shadow-sm mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label" for="roleId">Role</label>
+            <select id="roleId" name="roleId" class="form-select" asp-items="roleList">
+                <option value="">All roles</option>
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label" for="authorityId">Authority</label>
+            <select id="authorityId" name="authorityId" class="form-select" asp-items="authorityList">
+                <option value="">All authorities</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary flex-grow-1">Filter</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Reset</a>
+        </div>
+    </div>
+</form>
+
+@if (Model.Count == 0)
+{
+    <div class="alert alert-light border">No grants match this filter.</div>
+}
+else
+{
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Role</th>
+                        <th>Authority</th>
+                        <th>Granted</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var grant in Model)
+                {
+                    <tr>
+                        <td>
+                            @if (grant.Role is not null)
+                            {
+                                <a asp-controller="Roles" asp-action="Details" asp-route-id="@grant.RoleId">
+                                    <code>@grant.Role.Name</code>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-secondary">#@grant.RoleId</span>
+                            }
+                        </td>
+                        <td>
+                            @if (grant.Authority is not null)
+                            {
+                                <a asp-controller="Authorities" asp-action="Details" asp-route-id="@grant.AuthorityId">
+                                    <code>@grant.Authority.Name</code>
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="text-secondary">#@grant.AuthorityId</span>
+                            }
+                        </td>
+                        <td class="small text-secondary">@grant.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@grant.Id">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@grant.Id">Revoke</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

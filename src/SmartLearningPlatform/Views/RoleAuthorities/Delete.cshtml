@@ -1,0 +1,29 @@
+@model RoleAuthority
+@{
+    ViewData["Title"] = "Revoke authority";
+}
+
+<h1 class="h3 mb-3">Revoke this authority?</h1>
+
+<div class="alert alert-warning">
+    This deletes the <code>role_authority</code> row outright. Every user holding the role
+    loses this permission; the role and the authority both survive.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Role</dt>
+            <dd class="col-sm-9"><code>@(Model.Role?.Name ?? $"#{Model.RoleId}")</code></dd>
+
+            <dt class="col-sm-3">Authority</dt>
+            <dd class="col-sm-9"><code>@(Model.Authority?.Name ?? $"#{Model.AuthorityId}")</code></dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Revoke authority</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+</form>

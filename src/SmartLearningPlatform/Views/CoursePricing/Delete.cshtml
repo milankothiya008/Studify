@@ -1,0 +1,32 @@
+@model CoursePricing
+@{
+    ViewData["Title"] = "Delete course pricing";
+}
+
+<h1 class="h3 mb-3">Delete this pricing row?</h1>
+
+<div class="alert alert-danger">
+    <code>course_pricing</code> has no <code>deleted_at</code> column, so this is a real
+    delete. The course survives but drops back to incomplete and cannot leave Draft.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Course</dt>
+            <dd class="col-sm-9">@(Model.Course?.Title ?? $"#{Model.CourseId}")</dd>
+
+            <dt class="col-sm-3">Price</dt>
+            <dd class="col-sm-9">@Model.Currency.Format(Model.Price)</dd>
+
+            <dt class="col-sm-3">Effective</dt>
+            <dd class="col-sm-9">@Model.Currency.Format(Model.EffectivePrice)</dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.CourseId" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Delete pricing</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.CourseId">Cancel</a>
+</form>

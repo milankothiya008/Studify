@@ -1,0 +1,42 @@
+@model Authority
+@{
+    ViewData["Title"] = $"Retire {Model.Name}";
+}
+
+<h1 class="h3 mb-3">Retire this authority?</h1>
+
+<div class="alert alert-warning">
+    The authority is <strong>soft-deleted</strong>. Any role that grants it keeps its
+    <code>role_authority</code> row, but the authority stops appearing in every list.
+</div>
+
+<div class="card shadow-sm mb-3">
+    <div class="card-body">
+        <dl class="row mb-0">
+            <dt class="col-sm-3">Name</dt>
+            <dd class="col-sm-9"><code>@Model.Name</code></dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@(Model.Description ?? "—")</dd>
+
+            <dt class="col-sm-3">Granted to</dt>
+            <dd class="col-sm-9">
+                @if (Model.RoleAuthorities.Any())
+                {
+                    @string.Join(", ", Model.RoleAuthorities.Where(g => g.Role is not null)
+                                            .Select(g => g.Role!.Name))
+                }
+                else
+                {
+                    <span class="text-secondary">No roles</span>
+                }
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-flex gap-2">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-danger">Retire authority</button>
+    <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+</form>

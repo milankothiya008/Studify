@@ -1,0 +1,88 @@
+@model PagedResult<User>
+@{
+    ViewData["Title"] = "Users";
+    var query = ViewData["Query"] as string;
+    var status = ViewData["Status"] as UserStatus?;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <h1 class="h3 mb-0">Users</h1>
+    <a class="btn btn-primary" asp-action="Create">New user</a>
+</div>
+
+<form method="get" class="card card-body shadow-sm mb-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label" for="q">Search</label>
+            <input id="q" name="q" value="@query" class="form-control"
+                   placeholder="Email, phone or name" />
+        </div>
+        <div class="col-md-4">
+            <label class="form-label" for="status">Status</label>
+            <select id="status" name="status" class="form-select" asp-items="Html.GetEnumSelectList<UserStatus>()">
+                <option value="">Any status</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-outline-primary flex-grow-1">Filter</button>
+            <a class="btn btn-outline-secondary" asp-action="Index">Reset</a>
+        </div>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <div class="alert alert-light border">No users match this filter.</div>
+}
+else
+{
+    <div class="card shadow-sm mb-3">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Email</th>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th class="text-center">Enabled</th>
+                        <th>Created</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var user in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <a asp-action="Details" asp-route-id="@user.Id">@user.Email</a>
+                            @if (user.PhoneNumber is not null)
+                            {
+                                <div class="small text-secondary">@user.PhoneNumber</div>
+                            }
+                        </td>
+                        <td>@(user.Profile?.FullName ?? "—")</td>
+                        <td><span class="badge text-bg-@user.Status.BadgeClass()">@user.Status</span></td>
+                        <td class="text-center">
+                            @if (user.Enabled)
+                            {
+                                <span class="text-success">Yes</span>
+                            }
+                            else
+                            {
+                                <span class="text-danger">No</span>
+                            }
+                        </td>
+                        <td class="small text-secondary">@user.CreatedAt.ToString("yyyy-MM-dd")</td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@user.Id">Edit</a>
+                            <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@user.Id">Retire</a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <partial name="_Pager" model="Model" />
+}

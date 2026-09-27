@@ -1,0 +1,21 @@
+@model UserProfile
+@{
+    ViewData["Title"] = $"Edit {Model.FullName}";
+    ViewData["IsEdit"] = true;
+}
+
+<h1 class="h3 mb-3">Edit profile</h1>
+
+<form asp-action="Edit" asp-route-id="@Model.UserId" method="post" class="card card-body shadow-sm">
+    @Html.AntiForgeryToken()
+    <partial name="_Form" model="Model" view-data="ViewData" />
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a class="btn btn-outline-secondary" asp-action="Details" asp-route-id="@Model.UserId">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
