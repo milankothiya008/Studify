@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AlertCircle, CheckCircle2, CreditCard, Lock, Mail, ShieldCheck, Sparkles, Tag, X } from "lucide-react";
+import { AlertCircle, CalendarClock, CheckCircle2, CreditCard, Lock, Mail, ShieldCheck, Sparkles, Tag, X } from "lucide-react";
 import api, { getErrorMessage } from "../api";
 import PageHeader from "../components/PageHeader";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
-import { formatMoney, formatPrice } from "../utils";
+import { formatDate, formatMoney, formatPrice } from "../utils";
 
 // DEMO checkout page. Clicking "Pay" does not take real money.
 // URL: /checkout/course/5  or  /checkout/plan/2
@@ -17,6 +17,7 @@ function CheckoutPage() {
   const [payError, setPayError] = useState("");
   const [paying, setPaying] = useState(false);
   const [result, setResult] = useState(null); // answer from the API after paying
+  const [subscription, setSubscription] = useState(null); // only loaded when buying a plan
 
   // Coupon code
   const [couponInput, setCouponInput] = useState("");
@@ -46,6 +47,8 @@ function CheckoutPage() {
               setLoadError("This plan is not available anymore.");
               return;
             }
+            const subscriptionResponse = await api.get("/account/subscription");
+            setSubscription(subscriptionResponse.data);
             setItem({
               title: plan.name + " subscription",
               description: "Access every course for " + plan.durationDays + " days",
@@ -211,6 +214,17 @@ function CheckoutPage() {
               </div>
               <strong className="order-price">{formatPrice(item.price)}</strong>
             </div>
+
+            {subscription && subscription.isActive && (
+              <div className="alert alert-info">
+                <CalendarClock size={18} />
+                <span>
+                  {String(subscription.planId) === id ? "You are renewing your " : "You already have the "}
+                  <strong>{subscription.planName}</strong> plan until {formatDate(subscription.endDate)}. This purchase
+                  starts on {formatDate(subscription.endDate)}, so you don't lose any days.
+                </span>
+              </div>
+            )}
 
             <h2 className="step-title">
               <span className="step-number">2</span> Payment method

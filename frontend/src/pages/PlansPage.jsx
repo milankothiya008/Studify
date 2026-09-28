@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CalendarClock, Check, Lock, RefreshCw, Sparkles, Unlock } from "lucide-react";
+import { BadgeCheck, CalendarClock, Check, Lock, RefreshCw, Sparkles, Unlock } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../AuthContext";
 import PageHeader from "../components/PageHeader";
@@ -46,6 +46,8 @@ function PlansPage() {
     navigate("/checkout/plan/" + planId);
   }
 
+  const isSubscribed = Boolean(subscription && subscription.isActive);
+
   // The most expensive plan is usually the best value per day.
   let bestPlanId = null;
   if (plans.length > 1) {
@@ -61,15 +63,24 @@ function PlansPage() {
       />
 
       <div className="container page">
-        {subscription && subscription.isActive && (
+        {isSubscribed && (
           <div className="status-card status-active">
             <Unlock size={22} />
             <div>
-              <strong>Your {subscription.planName} subscription is active</strong>
+              <strong>Your current plan: {subscription.planName}</strong>
               <p>
-                Valid until {formatDate(subscription.endDate)} ({subscription.daysLeft} days left). Buying another plan
-                adds its days to the end of your current one.
+                Active until {formatDate(subscription.currentPlanEndDate)}. You have access to every course for{" "}
+                {subscription.daysLeft} more {subscription.daysLeft === 1 ? "day" : "days"}
+                {subscription.upcomingPlans.length > 0 && " (until " + formatDate(subscription.endDate) + ")"}.
               </p>
+              {subscription.upcomingPlans.map(function (upcoming) {
+                return (
+                  <p key={upcoming.startDate} className="upcoming-plan">
+                    <CalendarClock size={15} /> Next: {upcoming.planName} plan, {formatDate(upcoming.startDate)} to{" "}
+                    {formatDate(upcoming.endDate)}
+                  </p>
+                );
+              })}
             </div>
           </div>
         )}
@@ -95,9 +106,30 @@ function PlansPage() {
 
           {plans.map(function (plan, index) {
             const perDay = plan.price / plan.durationDays;
-            const isBest = plan.id === bestPlanId;
+            const isCurrent = isSubscribed && plan.id === subscription.planId;
+            // Already bought in advance, starts after the current plan.
+            const upcoming = isSubscribed ? subscription.upcomingPlans.find((u) => u.planId === plan.id) : null;
+            const isBest = plan.id === bestPlanId && !isCurrent && !upcoming;
+
+            let cardClass = "plan-card stagger-item";
+            if (isCurrent) {
+              cardClass = cardClass + " current";
+            } else if (isBest) {
+              cardClass = cardClass + " best";
+            }
+
             return (
-              <div key={plan.id} className={isBest ? "plan-card best stagger-item" : "plan-card stagger-item"} style={{ "--i": index }}>
+              <div key={plan.id} className={cardClass} style={{ "--i": index }}>
+                {isCurrent && (
+                  <div className="plan-ribbon plan-ribbon-current">
+                    <BadgeCheck size={14} /> Your current plan
+                  </div>
+                )}
+                {upcoming && !isCurrent && (
+                  <div className="plan-ribbon plan-ribbon-next">
+                    <CalendarClock size={14} /> Starts {formatDate(upcoming.startDate)}
+                  </div>
+                )}
                 {isBest && (
                   <div className="plan-ribbon">
                     <Sparkles size={14} /> Best value
@@ -119,12 +151,31 @@ function PlansPage() {
                     );
                   })}
                 </ul>
-                <button
-                  className={isBest ? "btn btn-primary btn-block btn-large" : "btn btn-outline btn-block btn-large"}
-                  onClick={() => choosePlan(plan.id)}
-                >
-                  {subscription && subscription.isActive ? "Extend with " + plan.name : "Get " + plan.name}
-                </button>
+                {isCurrent ? (
+                  <>
+                    <button className="btn btn-block btn-large btn-current" disabled>
+                      <BadgeCheck size={18} /> Current plan
+                    </button>
+                    <p className="plan-note">
+                      Active until {formatDate(subscription.currentPlanEndDate)}.{" "}
+                      <button className="link-button" onClick={() => choosePlan(plan.id)}>
+                        Renew in advance
+                      </button>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      className={isBest ? "btn btn-primary btn-block btn-large" : "btn btn-outline btn-block btn-large"}
+                      onClick={() => choosePlan(plan.id)}
+                    >
+                      Get {plan.name}
+                    </button>
+                    {isSubscribed && (
+                      <p className="plan-note">Starts on {formatDate(subscription.endDate)}, after your current plan.</p>
+                    )}
+                  </>
+                )}
               </div>
             );
           })}

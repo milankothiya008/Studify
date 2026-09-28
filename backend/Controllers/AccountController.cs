@@ -102,12 +102,27 @@ namespace SmartLearning.Api.Controllers
 
             DateTime endDate = subscriptions.Max(s => s.EndDate);
 
+            // Plans bought in advance, which start later.
+            List<UpcomingPlanDto> upcoming = subscriptions
+                .Where(s => s.StartDate > now)
+                .Select(s => new UpcomingPlanDto
+                {
+                    PlanId = s.PlanId,
+                    PlanName = s.Plan.Name,
+                    StartDate = s.StartDate,
+                    EndDate = s.EndDate
+                })
+                .ToList();
+
             return Ok(new SubscriptionStatusDto
             {
                 IsActive = true,
+                PlanId = current.PlanId,
                 PlanName = current.Plan.Name,
+                CurrentPlanEndDate = current.EndDate,
                 EndDate = endDate,
-                DaysLeft = (int)Math.Ceiling((endDate - now).TotalDays)
+                DaysLeft = (int)Math.Ceiling((endDate - now).TotalDays),
+                UpcomingPlans = upcoming
             });
         }
 

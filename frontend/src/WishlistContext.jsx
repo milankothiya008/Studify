@@ -37,11 +37,16 @@ export function WishlistProvider({ children }) {
   async function toggle(courseId) {
     if (isSaved(courseId)) {
       await api.delete("/wishlist/" + courseId);
-      setSavedIds(savedIds.filter((id) => id !== courseId));
+      // "oldIds" is always the newest list, even if another heart was clicked meanwhile.
+      setSavedIds(function (oldIds) {
+        return oldIds.filter((id) => id !== courseId);
+      });
       return false;
     }
     await api.post("/wishlist/" + courseId);
-    setSavedIds([...savedIds, courseId]);
+    setSavedIds(function (oldIds) {
+      return oldIds.includes(courseId) ? oldIds : [...oldIds, courseId];
+    });
     return true;
   }
 

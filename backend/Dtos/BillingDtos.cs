@@ -32,9 +32,26 @@ namespace SmartLearning.Api.Dtos
     public class SubscriptionStatusDto
     {
         public bool IsActive { get; set; }
+
+        // The plan that is running right now.
+        public int? PlanId { get; set; }
         public string PlanName { get; set; }
+        public DateTime? CurrentPlanEndDate { get; set; }
+
+        // The last day of access, including plans bought in advance (see UpcomingPlans).
         public DateTime? EndDate { get; set; }
         public int DaysLeft { get; set; }
+
+        // Plans already paid for that start when the current one ends.
+        public List<UpcomingPlanDto> UpcomingPlans { get; set; } = new List<UpcomingPlanDto>();
+    }
+
+    public class UpcomingPlanDto
+    {
+        public int PlanId { get; set; }
+        public string PlanName { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime EndDate { get; set; }
     }
 
     public class PaymentDto

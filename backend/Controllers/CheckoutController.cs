@@ -103,6 +103,14 @@ namespace SmartLearning.Api.Controllers
                 return ErrorMessage(400, price.CouponError);
             }
 
+            // The coupon use, the payment and the enrollment are saved together, or not at all.
+            using var transaction = await _db.Database.BeginTransactionAsync();
+
+            if (!await ClaimCouponUseAsync(price))
+            {
+                return ErrorMessage(400, "This coupon has just reached its maximum number of uses.");
+            }
+
             Payment payment = CreateDemoPayment(userId, "Course", price);
             payment.CourseId = course.Id;
             _db.Payments.Add(payment);
@@ -127,11 +135,12 @@ namespace SmartLearning.Api.Controllers
             try
             {
                 await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
             catch (DbUpdateException)
             {
                 // Two "buy" requests arrived at the same moment. The other one created the
-                // enrollment, and this one is cancelled completely (its payment is not saved).
+                // enrollment, and this one is cancelled completely (no payment, no coupon use).
                 return ErrorMessage(400, "You already own this course.");
             }
 
@@ -163,6 +172,11 @@ namespace SmartLearning.Api.Controllers
             // the database lets only one of the two purchases finish. Without it, both would
             // start from the same end date and the student would pay twice for one extension.
             using var transaction = await _db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
+
+            if (!await ClaimCouponUseAsync(price))
+            {
+                return ErrorMessage(400, "This coupon has just reached its maximum number of uses.");
+            }
 
             // If a subscription is still running, the new one starts when it ends
             // (so the student never loses days they already paid for).
@@ -206,13 +220,26 @@ namespace SmartLearning.Api.Controllers
 
         // ---------- helpers ----------
 
-        private Payment CreateDemoPayment(int userId, string paymentType, PriceResult price)
+        // Counts one use of the coupon, directly in the database, but only while it is still
+        // allowed. Two students using the last available use at the same moment: only one wins.
+        // Returns false when the coupon can no longer be used. (true when there is no coupon)
+        private async Task<bool> ClaimCouponUseAsync(PriceResult price)
         {
-            if (price.Coupon != null)
+            if (price.Coupon == null)
             {
-                price.Coupon.UsedCount++; // saved together with the payment
+                return true;
             }
 
+            int couponId = price.Coupon.Id;
+            int updatedRows = await _db.Coupons
+                .Where(c => c.Id == couponId && c.IsActive && (c.MaxUses == null || c.UsedCount < c.MaxUses))
+                .ExecuteUpdateAsync(setters => setters.SetProperty(c => c.UsedCount, c => c.UsedCount + 1));
+
+            return updatedRows == 1;
+        }
+
+        private Payment CreateDemoPayment(int userId, string paymentType, PriceResult price)
+        {
             return new Payment
             {
                 UserId = userId,

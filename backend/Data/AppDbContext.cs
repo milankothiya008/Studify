@@ -99,6 +99,13 @@ namespace SmartLearning.Api.Data
                 .HasIndex(c => c.Code)
                 .IsUnique();
 
+            // A course coupon is deleted together with its course.
+            modelBuilder.Entity<Coupon>()
+                .HasOne(c => c.Course)
+                .WithMany()
+                .HasForeignKey(c => c.CourseId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             modelBuilder.Entity<Coupon>()
                 .HasOne(c => c.CreatedBy)
                 .WithMany()

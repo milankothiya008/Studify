@@ -96,13 +96,16 @@ function QuizEditor({ section, onChanged }) {
       });
   }
 
+  const quizId = section.quiz ? section.quiz.id : null;
+
+  // Load the quiz when the panel opens, and again when the quiz appears (right after creating it).
   useEffect(
     function () {
-      if (open && section.quiz) {
+      if (open && quizId) {
         loadQuiz();
       }
     },
-    [open]
+    [open, quizId]
   );
 
   async function createQuiz(event) {

@@ -16,7 +16,9 @@ function AnalyticsPanel() {
   useEffect(
     function () {
       setAnalytics(null);
-      api.get("/instructor/analytics", { params: { days: days } }).then(function (response) {
+      // getTimezoneOffset() is -330 in India, the API wants +330.
+      const utcOffsetMinutes = -new Date().getTimezoneOffset();
+      api.get("/instructor/analytics", { params: { days: days, utcOffsetMinutes: utcOffsetMinutes } }).then(function (response) {
         setAnalytics(response.data);
       });
     },

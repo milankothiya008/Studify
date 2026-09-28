@@ -65,15 +65,23 @@ namespace SmartLearning.Api.Controllers
             return Ok(dashboard);
         }
 
-        // GET api/instructor/analytics?days=30  -> enrollments and revenue per day
+        // GET api/instructor/analytics?days=30&utcOffsetMinutes=330  -> enrollments and revenue per day
+        // utcOffsetMinutes = the instructor's time zone (India = +330), so a sale at 1 AM in India
+        // is counted on the right day, not on the day before (which it still is in UTC).
         [HttpGet("analytics")]
-        public async Task<ActionResult<InstructorAnalyticsDto>> GetAnalytics(int days = 30)
+        public async Task<ActionResult<InstructorAnalyticsDto>> GetAnalytics(int days = 30, int utcOffsetMinutes = 0)
         {
             if (days < 7) days = 7;
             if (days > 365) days = 365;
+            if (utcOffsetMinutes < -840 || utcOffsetMinutes > 840) utcOffsetMinutes = 0;
 
             int userId = GetUserId();
-            DateTime firstDay = DateTime.UtcNow.Date.AddDays(-(days - 1));
+
+            // "Today" in the instructor's time zone, and the first day of the period.
+            DateTime localToday = DateTime.UtcNow.AddMinutes(utcOffsetMinutes).Date;
+            DateTime firstLocalDay = localToday.AddDays(-(days - 1));
+            // The same moment in UTC, to search the database.
+            DateTime firstDay = firstLocalDay.AddMinutes(-utcOffsetMinutes);
 
             // Load the raw rows, then count them per day in C#.
             List<DateTime> enrollmentDates = await _db.Enrollments
@@ -88,12 +96,13 @@ namespace SmartLearning.Api.Controllers
             List<DailyStatDto> daily = new List<DailyStatDto>();
             for (int i = 0; i < days; i++)
             {
-                DateTime day = firstDay.AddDays(i);
+                DateTime day = firstLocalDay.AddDays(i);
                 daily.Add(new DailyStatDto
                 {
                     Date = day.ToString("yyyy-MM-dd"),
-                    Enrollments = enrollmentDates.Count(d => d.Date == day),
-                    Revenue = payments.Where(p => p.CreatedAt.Date == day).Sum(p => p.Amount)
+                    // Move each UTC time into the instructor's time zone before taking its date.
+                    Enrollments = enrollmentDates.Count(d => d.AddMinutes(utcOffsetMinutes).Date == day),
+                    Revenue = payments.Where(p => p.CreatedAt.AddMinutes(utcOffsetMinutes).Date == day).Sum(p => p.Amount)
                 });
             }
 
@@ -178,20 +187,27 @@ namespace SmartLearning.Api.Controllers
                 return ErrorMessage(400, "This course has students, so it cannot be deleted. Unpublish it instead.");
             }
 
-            // Remove the uploaded files first.
-            await _fileStorage.DeleteFileAsync(course.ThumbnailPublicId, false);
-            await _fileStorage.DeleteFileAsync(course.PromoVideoPublicId, true);
+            // Remember the uploaded files before the course is gone.
+            List<string> videoIds = new List<string> { course.PromoVideoPublicId };
             foreach (Section section in course.Sections)
             {
                 foreach (Lecture lecture in section.Lectures)
                 {
-                    await _fileStorage.DeleteFileAsync(lecture.VideoPublicId, true);
+                    videoIds.Add(lecture.VideoPublicId);
                 }
             }
+            string thumbnailId = course.ThumbnailPublicId;
 
-            // Sections and lectures are deleted automatically together with the course (cascade delete).
+            // Sections, lectures, quizzes and coupons are deleted together with the course (cascade delete).
             _db.Courses.Remove(course);
             await _db.SaveChangesAsync();
+
+            // Only now, when the database delete worked, remove the files.
+            await _fileStorage.DeleteFileAsync(thumbnailId, false);
+            foreach (string videoId in videoIds)
+            {
+                await _fileStorage.DeleteFileAsync(videoId, true);
+            }
 
             return NoContent();
         }

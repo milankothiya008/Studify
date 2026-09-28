@@ -103,6 +103,7 @@ function MyLearningPage() {
                         <Lock size={22} /> Subscription expired
                       </div>
                     )}
+                    {course.accessType === "Subscription" && <span className="card-tag">Included in plan</span>}
                     {course.progressPercent === 100 && (
                       <span className="card-tag card-tag-success">
                         <CheckCircle2 size={14} /> Completed
@@ -119,7 +120,6 @@ function MyLearningPage() {
                       {course.totalLectures} lectures
                     </p>
 
-                    {course.accessType === "Subscription" && <span className="badge badge-brand">Included in plan</span>}
 
                     <div className="card-actions">
                       {course.canWatch ? (

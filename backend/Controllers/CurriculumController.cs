@@ -84,13 +84,15 @@ namespace SmartLearning.Api.Controllers
             }
 
             List<Lecture> lectures = await _db.Lectures.Where(l => l.SectionId == id).ToListAsync();
+
+            _db.Sections.Remove(section);
+            await _db.SaveChangesAsync();
+
+            // Remove the videos only after the database delete worked.
             foreach (Lecture lecture in lectures)
             {
                 await _fileStorage.DeleteFileAsync(lecture.VideoPublicId, true);
             }
-
-            _db.Sections.Remove(section);
-            await _db.SaveChangesAsync();
             return NoContent();
         }
 
@@ -226,10 +228,13 @@ namespace SmartLearning.Api.Controllers
                 return ErrorMessage(404, "Lecture not found.");
             }
 
-            await _fileStorage.DeleteFileAsync(lecture.VideoPublicId, true);
+            string videoId = lecture.VideoPublicId;
 
             _db.Lectures.Remove(lecture);
             await _db.SaveChangesAsync();
+
+            // Remove the video only after the database delete worked.
+            await _fileStorage.DeleteFileAsync(videoId, true);
             return NoContent();
         }
 

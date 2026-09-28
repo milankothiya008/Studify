@@ -161,6 +161,11 @@ function CoursePlayerPage() {
   const nextLecture = currentIndex >= 0 && currentIndex < lectures.length - 1 ? lectures[currentIndex + 1] : null;
 
   function openLecture(lectureId) {
+    // A jump time is only for a video; forget it if this lecture has none.
+    const target = lectures.find((l) => l.id === lectureId);
+    if (!target || !target.videoUrl) {
+      jumpToSecond.current = null;
+    }
     setCurrentQuizId(null);
     setCurrentLectureId(lectureId);
     setCurrentSecond(0);

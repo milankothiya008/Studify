@@ -2077,6 +2077,17 @@ input[type="radio"] {
   gap: 6px;
 }
 
+/* Every card has the same layout, whatever the title length:
+   the title always takes 2 lines, and the buttons sit at the bottom of the card. */
+.my-course h3 {
+  min-height: 2.5em;
+}
+
+.my-course .card-actions {
+  margin-top: auto;
+  padding-top: 8px;
+}
+
 .my-course .progress {
   margin-top: 6px;
 }
@@ -3334,6 +3345,46 @@ input[type="radio"] {
   font-weight: 700;
   white-space: nowrap;
   box-shadow: var(--shadow-brand);
+}
+
+.plan-card.current {
+  border: 2px solid var(--success);
+  background: linear-gradient(180deg, #f0fdf8 0%, white 40%);
+}
+
+.plan-ribbon-current {
+  background: var(--success);
+  box-shadow: 0 8px 20px rgba(5, 150, 105, 0.3);
+}
+
+.plan-ribbon-next {
+  background: var(--gray-800);
+  box-shadow: var(--shadow);
+}
+
+.btn-current,
+.btn-current:disabled {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+  opacity: 1;
+  cursor: default;
+}
+
+.plan-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.upcoming-plan {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px !important;
+  color: #047857 !important;
+  font-weight: 600;
 }
 
 .plan-price {
