@@ -178,6 +178,9 @@ namespace SmartLearning.Api.Data
             db.Courses.AddRange(csharpCourse, reactCourse, designCourse);
 
             db.SaveChanges();
+
+            // 5 more demo courses (marketing, business, photography, music, cooking).
+            DemoCourses.AddMissing(db);
         }
 
         private static Section MakeSection(int order, string title, params Lecture[] lectures)

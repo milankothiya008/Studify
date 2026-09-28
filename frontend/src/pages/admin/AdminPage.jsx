@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { BookOpen, CreditCard, FolderTree, GraduationCap, IndianRupee, Users } from "lucide-react";
-import api from "../../api";
+import { BookOpen, CreditCard, FolderTree, GraduationCap, IndianRupee, Sparkles, Users } from "lucide-react";
+import api, { getErrorMessage } from "../../api";
+import { useToast } from "../../ToastContext";
 import PageHeader from "../../components/PageHeader";
 import { SkeletonBlock } from "../../components/Skeleton";
 import { formatMoney } from "../../utils";
@@ -22,14 +23,35 @@ const TABS = [
 ];
 
 function AdminPage() {
+  const showToast = useToast();
   const [stats, setStats] = useState(null);
   const [activeTab, setActiveTab] = useState("users");
+  const [addingDemo, setAddingDemo] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0); // changing it reloads the open tab
 
-  useEffect(function () {
+  function loadStats() {
     api.get("/admin/stats").then(function (response) {
       setStats(response.data);
     });
+  }
+
+  useEffect(function () {
+    loadStats();
   }, []);
+
+  // Adds the demo courses from backend/Data/DemoCourses.cs (only the ones that are missing).
+  async function handleAddDemoCourses() {
+    setAddingDemo(true);
+    try {
+      const response = await api.post("/admin/demo-courses");
+      showToast(response.data.message, response.data.added > 0 ? "success" : "info");
+      loadStats();
+      setRefreshKey(refreshKey + 1);
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    }
+    setAddingDemo(false);
+  }
 
   const statCards = stats
     ? [
@@ -52,7 +74,12 @@ function AdminPage() {
 
   return (
     <div>
-      <PageHeader title="Admin panel" subtitle="Platform numbers, users, courses, categories and plans." />
+      <PageHeader title="Admin panel" subtitle="Platform numbers, users, courses, categories and plans.">
+        <button className="btn btn-white" onClick={handleAddDemoCourses} disabled={addingDemo}>
+          {addingDemo ? <span className="btn-spinner btn-spinner-dark"></span> : <Sparkles size={18} />}
+          Add demo courses
+        </button>
+      </PageHeader>
 
       <div className="container page">
         <div className="stat-grid">
@@ -96,7 +123,7 @@ function AdminPage() {
           })}
         </div>
 
-        <div className="tab-content" key={activeTab}>
+        <div className="tab-content" key={activeTab + "-" + refreshKey}>
           {activeTab === "users" && <AdminUsers />}
           {activeTab === "courses" && <AdminCourses />}
           {activeTab === "categories" && <AdminCategories />}

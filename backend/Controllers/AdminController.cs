@@ -92,6 +92,20 @@ namespace SmartLearning.Api.Controllers
             return Ok(new { message = "Role changed. The user must log in again to see the change." });
         }
 
+        // POST api/admin/demo-courses  -> adds the demo courses that are missing (see Data/DemoCourses.cs)
+        [HttpPost("demo-courses")]
+        public ActionResult AddDemoCourses()
+        {
+            int added = DemoCourses.AddMissing(_db);
+
+            if (added == 0)
+            {
+                return Ok(new { added = 0, message = "All demo courses are already there." });
+            }
+            string word = added == 1 ? " demo course added." : " demo courses added.";
+            return Ok(new { added = added, message = added + word });
+        }
+
         // GET api/admin/courses  -> every course, including drafts
         [HttpGet("courses")]
         public async Task<ActionResult<List<CourseCardDto>>> GetCourses()
