@@ -128,7 +128,8 @@ namespace SmartLearning.Api.Controllers
 
         // Shared code for the two progress endpoints above.
         // watchedSeconds or isCompleted can be null when they are not being changed.
-        private async Task<ActionResult<ProgressResponse>> UpdateProgressAsync(int lectureId, int? watchedSeconds, bool? isCompleted)
+        // isRetry is true when this method calls itself a second time (see the catch below).
+        private async Task<ActionResult<ProgressResponse>> UpdateProgressAsync(int lectureId, int? watchedSeconds, bool? isCompleted, bool isRetry = false)
         {
             int userId = GetUserId();
 
@@ -192,7 +193,22 @@ namespace SmartLearning.Api.Controllers
             enrollment.LastLectureId = lectureId;
             enrollment.LastAccessedAt = DateTime.UtcNow;
 
-            await _db.SaveChangesAsync();
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Two saves for the same lecture arrived at the same moment and both tried
+                // to create the progress row. The other one won, so try once more:
+                // this time the row exists and is simply updated.
+                if (isRetry)
+                {
+                    throw;
+                }
+                _db.ChangeTracker.Clear();
+                return await UpdateProgressAsync(lectureId, watchedSeconds, isCompleted, true);
+            }
 
             // Count the progress of the whole course.
             int totalLectures = await _db.Lectures.CountAsync(l => l.Section.CourseId == course.Id);

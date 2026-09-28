@@ -1,7 +1,19 @@
 import axios from "axios";
 
 // Address of the .NET backend. You can change it in a ".env" file (see .env.example).
-export const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+// A "/" or "/api" at the end is removed, so both "https://x.app" and "https://x.app/api/" work.
+function cleanApiUrl(url) {
+  let clean = url.trim();
+  while (clean.endsWith("/")) {
+    clean = clean.slice(0, -1);
+  }
+  if (clean.endsWith("/api")) {
+    clean = clean.slice(0, -4);
+  }
+  return clean;
+}
+
+export const API_URL = cleanApiUrl(import.meta.env.VITE_API_URL || "http://localhost:5000");
 
 // One axios object for all API calls. Every URL starts with /api
 const api = axios.create({

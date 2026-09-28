@@ -120,18 +120,19 @@ namespace SmartLearning.Api.Controllers
             string role = GetUserRole();
             bool isOwner = course.InstructorId == userId;
 
-            // Draft courses are only visible to their instructor and to admins.
-            if (!course.IsPublished && !isOwner && role != Roles.Admin)
-            {
-                return ErrorMessage(404, "Course not found.");
-            }
-
             Enrollment enrollment = null;
             bool hasActiveSubscription = false;
             if (userId != 0)
             {
                 enrollment = await _db.Enrollments.FirstOrDefaultAsync(e => e.UserId == userId && e.CourseId == id);
                 hasActiveSubscription = await _accessService.HasActiveSubscriptionAsync(userId);
+            }
+
+            // Unpublished courses are only visible to their instructor, to admins,
+            // and to students who enrolled before the course was unpublished.
+            if (!course.IsPublished && !isOwner && role != Roles.Admin && enrollment == null)
+            {
+                return ErrorMessage(404, "Course not found.");
             }
 
             bool canWatch = await _accessService.CanWatchCourseAsync(userId, role, course);

@@ -50,12 +50,25 @@ builder.Services.AddAuthorization();
 
 // ---------------- CORS ----------------
 // Allows the React app (a different address/port) to call this API.
-string frontendUrl = builder.Configuration["FrontendUrl"];
+// FrontendUrl can hold several addresses separated by commas, for example
+// "https://studify.vercel.app,http://localhost:5173".
+// A "/" at the end is removed, because the browser sends the address without it.
+string[] frontendUrls = builder.Configuration["FrontendUrl"].Split(',');
+List<string> allowedOrigins = new List<string>();
+foreach (string url in frontendUrls)
+{
+    string cleanUrl = url.Trim().TrimEnd('/');
+    if (cleanUrl != "")
+    {
+        allowedOrigins.Add(cleanUrl);
+    }
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactApp", policy =>
     {
-        policy.WithOrigins(frontendUrl)
+        policy.WithOrigins(allowedOrigins.ToArray())
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
@@ -75,12 +88,41 @@ builder.Services.Configure<FormOptions>(options =>
 
 var app = builder.Build();
 
+// ---------------- Safety checks for a live server ----------------
+// On your computer the environment is "Development" and these checks are skipped.
+if (!app.Environment.IsDevelopment())
+{
+    // The default key is public on GitHub. With it, anyone could create a fake admin login.
+    if (jwtKey.StartsWith("CHANGE-ME"))
+    {
+        throw new Exception("Set the Jwt__Key environment variable to your own long secret.");
+    }
+
+    string cloudName = app.Configuration["Cloudinary:CloudName"];
+    if (string.IsNullOrWhiteSpace(cloudName) || cloudName.StartsWith("YOUR_"))
+    {
+        app.Logger.LogWarning("Cloudinary is not configured. Uploaded files are saved on this server's disk "
+            + "and are LOST on every redeploy. Set the Cloudinary__CloudName, Cloudinary__ApiKey and "
+            + "Cloudinary__ApiSecret environment variables.");
+    }
+}
+
 // ---------------- Create / update the database, then add demo data ----------------
 using (IServiceScope scope = app.Services.CreateScope())
 {
     AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();   // creates the database and tables if they do not exist
+
     string demoPassword = app.Configuration["DemoPassword"];
+
+    // On a live server, never create the admin account with the public demo password.
+    bool databaseIsEmpty = !db.Users.Any();
+    if (!app.Environment.IsDevelopment() && databaseIsEmpty && demoPassword == "Password@123")
+    {
+        throw new Exception("Set the DemoPassword environment variable before the first start. "
+            + "It becomes the password of admin@smartlearn.dev.");
+    }
+
     DbSeeder.Seed(db, demoPassword);   // adds demo users, categories, plans and courses (only once)
 }
 
