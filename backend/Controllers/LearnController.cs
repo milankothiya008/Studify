@@ -18,11 +18,13 @@ namespace SmartLearning.Api.Controllers
 
         private readonly AppDbContext _db;
         private readonly CourseAccessService _accessService;
+        private readonly NotificationService _notificationService;
 
-        public LearnController(AppDbContext db, CourseAccessService accessService)
+        public LearnController(AppDbContext db, CourseAccessService accessService, NotificationService notificationService)
         {
             _db = db;
             _accessService = accessService;
+            _notificationService = notificationService;
         }
 
         // GET api/learn/5  -> course curriculum with video links and my progress
@@ -35,6 +37,9 @@ namespace SmartLearning.Api.Controllers
                 .Include(c => c.Instructor)
                 .Include(c => c.Sections)
                     .ThenInclude(s => s.Lectures)
+                .Include(c => c.Sections)
+                    .ThenInclude(s => s.Quiz)
+                        .ThenInclude(q => q.Questions)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
 
             if (course == null)
@@ -54,7 +59,11 @@ namespace SmartLearning.Api.Controllers
                 .Where(p => p.UserId == userId && p.Lecture.Section.CourseId == courseId)
                 .ToListAsync();
 
-            List<SectionDto> sections = CourseMapper.BuildSections(course, true, progressList);
+            List<QuizAttempt> quizAttempts = await _db.QuizAttempts
+                .Where(a => a.UserId == userId && a.Quiz.Section.CourseId == courseId)
+                .ToListAsync();
+
+            List<SectionDto> sections = CourseMapper.BuildSections(course, true, progressList, quizAttempts);
             int totalLectures = sections.Sum(s => s.Lectures.Count);
             int completedLectures = sections.Sum(s => s.Lectures.Count(l => l.IsCompleted));
 
@@ -64,6 +73,8 @@ namespace SmartLearning.Api.Controllers
             {
                 enrollment.CompletedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
+                await _notificationService.NotifyAsync(userId, "Course completed! 🎉",
+                    "You finished \"" + course.Title + "\". Your certificate is ready.", "/certificate/" + course.Id);
             }
 
             PlayerDto player = new PlayerDto
@@ -228,6 +239,8 @@ namespace SmartLearning.Api.Controllers
             {
                 enrollment.CompletedAt = DateTime.UtcNow;
                 await _db.SaveChangesAsync();
+                await _notificationService.NotifyAsync(userId, "Course completed! 🎉",
+                    "You finished \"" + course.Title + "\". Your certificate is ready.", "/certificate/" + course.Id);
             }
 
             ProgressResponse response = new ProgressResponse

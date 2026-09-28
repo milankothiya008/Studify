@@ -19,6 +19,9 @@ import PurchaseHistoryPage from "./pages/PurchaseHistoryPage";
 import ProfilePage from "./pages/ProfilePage";
 import CertificatePage from "./pages/CertificatePage";
 import NotFoundPage from "./pages/NotFoundPage";
+import WishlistPage from "./pages/WishlistPage";
+import VerifyCertificatePage from "./pages/VerifyCertificatePage";
+import InstructorQuestionsPage from "./pages/instructor/InstructorQuestionsPage";
 import InstructorDashboardPage from "./pages/instructor/InstructorDashboardPage";
 import CourseEditorPage from "./pages/instructor/CourseEditorPage";
 import AdminPage from "./pages/admin/AdminPage";
@@ -55,6 +58,8 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/verify" element={<VerifyCertificatePage />} />
+          <Route path="/verify/:number" element={<VerifyCertificatePage />} />
 
           {/* Pages for logged in users */}
           <Route path="/my-learning" element={<ProtectedRoute><MyLearningPage /></ProtectedRoute>} />
@@ -63,11 +68,16 @@ function App() {
           <Route path="/purchases" element={<ProtectedRoute><PurchaseHistoryPage /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
           <Route path="/certificate/:courseId" element={<ProtectedRoute><CertificatePage /></ProtectedRoute>} />
+          <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
 
           {/* Pages for instructors */}
           <Route
             path="/instructor"
             element={<ProtectedRoute roles={["Instructor", "Admin"]}><InstructorDashboardPage /></ProtectedRoute>}
+          />
+          <Route
+            path="/instructor/questions"
+            element={<ProtectedRoute roles={["Instructor", "Admin"]}><InstructorQuestionsPage /></ProtectedRoute>}
           />
           <Route
             path="/instructor/course/:id"

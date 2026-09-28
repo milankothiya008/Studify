@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 import App from "./App";
 import { AuthProvider } from "./AuthContext";
 import { ToastProvider } from "./ToastContext";
+import { WishlistProvider } from "./WishlistContext";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
@@ -11,7 +12,9 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <ToastProvider>
         <AuthProvider>
-          <App />
+          <WishlistProvider>
+            <App />
+          </WishlistProvider>
         </AuthProvider>
       </ToastProvider>
     </BrowserRouter>

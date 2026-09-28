@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { BarChart3, Clock, PlayCircle } from "lucide-react";
 import StarRating from "./StarRating";
+import WishlistButton from "./WishlistButton";
 import { formatDuration, formatPrice } from "../utils";
 
 // One course in a grid of courses.
@@ -17,6 +18,7 @@ function CourseCard({ course, index }) {
           </div>
         )}
         {course.categoryName && <span className="card-tag">{course.categoryName}</span>}
+        <WishlistButton courseId={course.id} />
       </div>
 
       <div className="course-card-body">

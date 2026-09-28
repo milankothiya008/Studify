@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { BookOpen, CreditCard, FolderTree, GraduationCap, IndianRupee, Sparkles, Users } from "lucide-react";
+import { BookOpen, CreditCard, FolderTree, GraduationCap, IndianRupee, Sparkles, Tag, Users } from "lucide-react";
 import api, { getErrorMessage } from "../../api";
 import { useToast } from "../../ToastContext";
 import PageHeader from "../../components/PageHeader";
@@ -9,6 +9,7 @@ import AdminUsers from "./AdminUsers";
 import AdminCourses from "./AdminCourses";
 import AdminCategories from "./AdminCategories";
 import AdminPlans from "./AdminPlans";
+import AdminCoupons from "./AdminCoupons";
 
 // 1 -> "1 student", 3 -> "3 students"
 function plural(count, word) {
@@ -20,6 +21,7 @@ const TABS = [
   { key: "courses", label: "Courses", icon: BookOpen },
   { key: "categories", label: "Categories", icon: FolderTree },
   { key: "plans", label: "Subscription plans", icon: CreditCard },
+  { key: "coupons", label: "Coupons", icon: Tag },
 ];
 
 function AdminPage() {
@@ -128,6 +130,7 @@ function AdminPage() {
           {activeTab === "courses" && <AdminCourses />}
           {activeTab === "categories" && <AdminCategories />}
           {activeTab === "plans" && <AdminPlans />}
+          {activeTab === "coupons" && <AdminCoupons />}
         </div>
       </div>
     </div>

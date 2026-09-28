@@ -5,6 +5,7 @@ import api, { getErrorMessage } from "../../api";
 import PageHeader from "../../components/PageHeader";
 import EmptyState from "../../components/EmptyState";
 import { SkeletonRows } from "../../components/Skeleton";
+import AnalyticsPanel from "./AnalyticsPanel";
 import { formatDate, formatMoney, formatPrice } from "../../utils";
 
 function InstructorDashboardPage() {
@@ -95,7 +96,10 @@ function InstructorDashboardPage() {
               })}
             </div>
 
-            <div className="section-heading">
+            {/* Charts: new students and revenue per day */}
+            <AnalyticsPanel />
+
+            <div className="section-heading section-heading-spaced">
               <div>
                 <h2>Your courses</h2>
               </div>

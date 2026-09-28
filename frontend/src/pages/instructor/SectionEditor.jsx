@@ -3,6 +3,7 @@ import { AlertCircle, ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from "lucide-re
 import api, { getErrorMessage } from "../../api";
 import { useToast } from "../../ToastContext";
 import LectureEditor from "./LectureEditor";
+import QuizEditor from "./QuizEditor";
 
 // One section in the curriculum editor, with its lectures.
 function SectionEditor({ section, number, isFirst, isLast, onChanged }) {
@@ -149,6 +150,9 @@ function SectionEditor({ section, number, isFirst, isLast, onChanged }) {
           <Plus size={16} /> Add lecture
         </button>
       </form>
+
+      {/* Optional quiz at the end of the section */}
+      <QuizEditor section={section} onChanged={onChanged} />
     </div>
   );
 }

@@ -63,7 +63,134 @@ namespace SmartLearning.Api.Data
             }
 
             db.SaveChanges();
+
+            // Demo quizzes and coupon codes (also only the missing ones).
+            AddMissingQuizzes(db);
+            AddMissingCoupons(db, instructor);
+
             return added;
+        }
+
+        // ---------------------------------------------------------------
+        // Demo quizzes: added to a section of a demo course when that section has no quiz yet.
+        // ---------------------------------------------------------------
+        private static void AddMissingQuizzes(AppDbContext db)
+        {
+            AddQuiz(db, "C# for Complete Beginners", "C# Basics", "C# Basics Quiz",
+                NewQuestion("Which type stores a whole number like 42?", "string", "int", "bool", "double", 2,
+                    "int is the type for whole numbers. double is for numbers with decimals."),
+                NewQuestion("What does an if statement do?", "Repeats code", "Runs code only when a condition is true",
+                    "Stores a value", "Ends the program", 2,
+                    "if checks a condition and runs its block only when the condition is true."),
+                NewQuestion("Which loop is best when you know how many times to repeat?", "for", "if", "switch", "return", 1,
+                    "A for loop has a counter, so it is ideal for a known number of repetitions."));
+
+            AddQuiz(db, "React - The Practical Guide", "Components and Props", "Components Quiz",
+                NewQuestion("What is a React component?", "A CSS file", "A function that returns what to show on screen",
+                    "A database table", "A browser plugin", 2,
+                    "Components are JavaScript functions that return JSX."),
+                NewQuestion("How does a parent pass data to a child component?", "With props", "With CSS",
+                    "With localStorage", "It cannot", 1,
+                    "Props are the inputs of a component, set by its parent."),
+                NewQuestion("Can a child component change its props?", "Yes, anytime", "Only on Mondays",
+                    "No, props are read-only", "Only with CSS", 3,
+                    "Props are read-only. Use state for values that change."));
+
+            AddQuiz(db, "Digital Marketing Essentials", "Marketing Foundations", "Marketing Basics Quiz",
+                NewQuestion("What should you define before starting any campaign?", "The logo colour",
+                    "Your target customer and goal", "The office address", "The number of employees", 2,
+                    "Knowing who you talk to and what you want to achieve guides every other decision."),
+                NewQuestion("Which goal is measurable?", "Be more popular", "Get 200 newsletter sign-ups this month",
+                    "Look professional", "Post more", 2,
+                    "A good goal has a number and a deadline."));
+
+            AddQuiz(db, "Smartphone Photography Made Easy", "Composition and Light", "Composition Quiz",
+                NewQuestion("What is the rule of thirds?", "Take three photos of everything",
+                    "Place the subject along imaginary lines that split the frame in thirds",
+                    "Use only three colours", "Edit for three minutes", 2,
+                    "Placing the subject on the third lines makes photos feel balanced and natural."),
+                NewQuestion("When is the 'golden hour'?", "Midday", "Just after sunrise and just before sunset",
+                    "Midnight", "Any time it rains", 2,
+                    "The low sun gives soft, warm light that flatters almost any subject."));
+
+            db.SaveChanges();
+        }
+
+        private static void AddQuiz(AppDbContext db, string courseTitle, string sectionTitle, string quizTitle,
+            params QuizQuestion[] questions)
+        {
+            Section section = db.Sections
+                .Include(s => s.Quiz)
+                .FirstOrDefault(s => s.Title == sectionTitle && s.Course.Title == courseTitle);
+
+            if (section == null || section.Quiz != null)
+            {
+                return; // the course is missing, or the section already has a quiz
+            }
+
+            Quiz quiz = new Quiz { SectionId = section.Id, Title = quizTitle, PassPercent = 70 };
+            for (int i = 0; i < questions.Length; i++)
+            {
+                questions[i].OrderIndex = i + 1;
+                quiz.Questions.Add(questions[i]);
+            }
+            db.Quizzes.Add(quiz);
+        }
+
+        private static QuizQuestion NewQuestion(string text, string option1, string option2, string option3, string option4,
+            int correctOption, string explanation)
+        {
+            return new QuizQuestion
+            {
+                Text = text,
+                Option1 = option1,
+                Option2 = option2,
+                Option3 = option3,
+                Option4 = option4,
+                CorrectOption = correctOption,
+                Explanation = explanation
+            };
+        }
+
+        // ---------------------------------------------------------------
+        // Demo coupon codes
+        // ---------------------------------------------------------------
+        private static void AddMissingCoupons(AppDbContext db, User instructor)
+        {
+            // Site-wide coupons belong to an admin (or to the instructor if there is no admin).
+            User owner = db.Users.OrderBy(u => u.Id).FirstOrDefault(u => u.Role == Roles.Admin);
+            if (owner == null)
+            {
+                owner = instructor;
+            }
+
+            if (!db.Coupons.Any(c => c.Code == "WELCOME20"))
+            {
+                db.Coupons.Add(new Coupon
+                {
+                    Code = "WELCOME20",
+                    DiscountPercent = 20,
+                    ForPlans = false,
+                    CreatedById = owner.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (!db.Coupons.Any(c => c.Code == "SUBSCRIBE10"))
+            {
+                db.Coupons.Add(new Coupon
+                {
+                    Code = "SUBSCRIBE10",
+                    DiscountPercent = 10,
+                    ForPlans = true,
+                    CreatedById = owner.Id,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                });
+            }
+
+            db.SaveChanges();
         }
 
         private static Category FindOrCreateCategory(AppDbContext db, string name)

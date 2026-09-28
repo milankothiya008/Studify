@@ -127,7 +127,10 @@ namespace SmartLearning.Api.Controllers
                     ItemName = p.PaymentType == "Course"
                         ? (p.Course != null ? p.Course.Title : "Deleted course")
                         : (p.Plan != null ? p.Plan.Name + " subscription" : "Subscription"),
+                    OriginalAmount = p.OriginalAmount,
+                    DiscountAmount = p.DiscountAmount,
                     Amount = p.Amount,
+                    CouponCode = p.Coupon != null ? p.Coupon.Code : null,
                     Status = p.Status,
                     TransactionId = p.TransactionId,
                     CreatedAt = p.CreatedAt

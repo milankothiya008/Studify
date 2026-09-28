@@ -82,7 +82,7 @@ namespace SmartLearning.Api.Controllers
             }
 
             // Email: "You're enrolled in ..."
-            await _notificationService.SendEnrollmentEmailAsync(userId, courseId, accessType, null, null);
+            await _notificationService.OnEnrolledAsync(userId, courseId, accessType, null, null);
 
             return Ok(new { message = "You are enrolled. Happy learning!" });
         }

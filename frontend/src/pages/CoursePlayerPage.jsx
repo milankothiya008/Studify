@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft,
   Award,
@@ -7,6 +7,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ClipboardCheck,
   Eye,
   ListVideo,
   Lock,
@@ -18,6 +19,9 @@ import ProgressRing from "../components/ProgressRing";
 import ReviewForm from "../components/ReviewForm";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
+import QuestionsPanel from "../components/player/QuestionsPanel";
+import NotesPanel from "../components/player/NotesPanel";
+import QuizView from "../components/player/QuizView";
 import { formatClock, getAllLectures } from "../utils";
 
 // Save the video position every 10 seconds while it plays.
@@ -46,15 +50,23 @@ function pickStartLecture(player) {
 
 function CoursePlayerPage() {
   const { courseId } = useParams();
+  const [searchParams] = useSearchParams();
+  // A notification link like /learn/5?question=12 opens that question in the Q&A tab.
+  const questionFromLink = searchParams.get("question");
 
   const [player, setPlayer] = useState(null);
   const [currentLectureId, setCurrentLectureId] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [currentQuizId, setCurrentQuizId] = useState(null); // a quiz is shown instead of a video
+  const [activeTab, setActiveTab] = useState(questionFromLink ? "qa" : "overview");
+  const [openQuestionId, setOpenQuestionId] = useState(questionFromLink ? Number(questionFromLink) : null);
+  const [currentSecond, setCurrentSecond] = useState(0); // where the video is now (for notes)
   const [closedSections, setClosedSections] = useState({}); // sections collapsed in the sidebar
   const [error, setError] = useState("");
 
   // useRef keeps a value between renders without re-rendering the page.
   const lastSavedSecond = useRef(0);
+  const videoRef = useRef(null);
+  const jumpToSecond = useRef(null); // set by a note: start the next video at this second
 
   useEffect(
     function () {
@@ -149,9 +161,41 @@ function CoursePlayerPage() {
   const nextLecture = currentIndex >= 0 && currentIndex < lectures.length - 1 ? lectures[currentIndex + 1] : null;
 
   function openLecture(lectureId) {
+    setCurrentQuizId(null);
     setCurrentLectureId(lectureId);
-    setActiveTab("overview");
+    setCurrentSecond(0);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function openQuiz(quizId) {
+    setCurrentQuizId(quizId);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // A note was clicked: play that lecture from that second.
+  function jumpTo(lectureId, seconds) {
+    if (lectureId === currentLectureId && !currentQuizId && videoRef.current) {
+      videoRef.current.currentTime = seconds;
+      videoRef.current.play();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    jumpToSecond.current = seconds;
+    openLecture(lectureId);
+  }
+
+  // After a quiz: show the new best score in the sidebar.
+  function applyQuizResult(quizId, result) {
+    setPlayer(function (oldPlayer) {
+      const newSections = oldPlayer.sections.map(function (section) {
+        if (!section.quiz || section.quiz.id !== quizId) {
+          return section;
+        }
+        const quiz = { ...section.quiz, bestScore: result.bestScore, passed: section.quiz.passed || result.passed };
+        return { ...section, quiz: quiz };
+      });
+      return { ...oldPlayer, sections: newSections };
+    });
   }
 
   function toggleSection(sectionId) {
@@ -164,16 +208,23 @@ function CoursePlayerPage() {
 
   function handleLoadedMetadata(event) {
     const video = event.target;
-    // Resume from where the student stopped last time.
-    const resumeAt = currentLecture.watchedSeconds;
-    if (!currentLecture.isCompleted && resumeAt > 5 && resumeAt < video.duration - 5) {
-      video.currentTime = resumeAt;
+    if (jumpToSecond.current !== null) {
+      // Opened from a note: start at the note's second.
+      video.currentTime = jumpToSecond.current;
+      jumpToSecond.current = null;
+    } else {
+      // Resume from where the student stopped last time.
+      const resumeAt = currentLecture.watchedSeconds;
+      if (!currentLecture.isCompleted && resumeAt > 5 && resumeAt < video.duration - 5) {
+        video.currentTime = resumeAt;
+      }
     }
     lastSavedSecond.current = Math.floor(video.currentTime);
   }
 
   function handleTimeUpdate(event) {
     const second = Math.floor(event.target.currentTime);
+    setCurrentSecond(second);
     if (Math.abs(second - lastSavedSecond.current) >= SAVE_EVERY_SECONDS) {
       lastSavedSecond.current = second;
       saveProgress(currentLecture.id, second);
@@ -235,9 +286,16 @@ function CoursePlayerPage() {
 
       <div className="player-layout">
         <div className="player-main">
-          <div className="video-box">
-            {currentLecture && currentLecture.videoUrl && (
+          {currentQuizId && (
+            <div className="quiz-box">
+              <QuizView quizId={currentQuizId} onFinished={(result) => applyQuizResult(currentQuizId, result)} />
+            </div>
+          )}
+
+          <div className={currentQuizId ? "video-box hidden" : "video-box"}>
+            {currentLecture && currentLecture.videoUrl && !currentQuizId && (
               <video
+                ref={videoRef}
                 key={currentLecture.id}
                 src={currentLecture.videoUrl}
                 controls
@@ -262,7 +320,7 @@ function CoursePlayerPage() {
             )}
           </div>
 
-          <div className="player-nav">
+          <div className={currentQuizId ? "player-nav hidden" : "player-nav"}>
             <button
               className="btn btn-outline btn-small"
               disabled={!previousLecture}
@@ -296,6 +354,12 @@ function CoursePlayerPage() {
               <button className={activeTab === "overview" ? "tab active" : "tab"} onClick={() => setActiveTab("overview")}>
                 Overview
               </button>
+              <button className={activeTab === "qa" ? "tab active" : "tab"} onClick={() => setActiveTab("qa")}>
+                Q&amp;A
+              </button>
+              <button className={activeTab === "notes" ? "tab active" : "tab"} onClick={() => setActiveTab("notes")}>
+                Notes
+              </button>
               {player.isEnrolled && (
                 <button className={activeTab === "review" ? "tab active" : "tab"} onClick={() => setActiveTab("review")}>
                   Leave a rating
@@ -316,6 +380,23 @@ function CoursePlayerPage() {
                   <p className="muted">By {player.instructorName}</p>
                   {player.description && <p className="pre-line">{player.description}</p>}
                 </>
+              )}
+              {activeTab === "qa" && (
+                <QuestionsPanel
+                  courseId={player.courseId}
+                  lecture={currentLecture}
+                  openQuestionId={openQuestionId}
+                  onOpenQuestion={setOpenQuestionId}
+                />
+              )}
+              {activeTab === "notes" && (
+                <NotesPanel
+                  courseId={player.courseId}
+                  lecture={currentLecture}
+                  currentSecond={currentSecond}
+                  canSave={player.isEnrolled}
+                  onJump={jumpTo}
+                />
               )}
               {activeTab === "review" && <ReviewForm courseId={player.courseId} />}
             </div>
@@ -345,7 +426,7 @@ function CoursePlayerPage() {
                 <div className="accordion-body">
                   <div>
                     {section.lectures.map(function (lecture) {
-                      const isCurrent = lecture.id === currentLectureId;
+                      const isCurrent = lecture.id === currentLectureId && !currentQuizId;
                       let className = "player-lecture";
                       if (isCurrent) className = className + " current";
                       if (lecture.isCompleted) className = className + " done";
@@ -372,6 +453,25 @@ function CoursePlayerPage() {
                         </div>
                       );
                     })}
+
+                    {section.quiz && (
+                      <div
+                        className={currentQuizId === section.quiz.id ? "player-lecture player-quiz current" : "player-lecture player-quiz"}
+                        onClick={() => openQuiz(section.quiz.id)}
+                      >
+                        <span className={section.quiz.passed ? "quiz-badge passed" : "quiz-badge"}>
+                          <ClipboardCheck size={14} />
+                        </span>
+                        <div className="player-lecture-text">
+                          <span>Quiz: {section.quiz.title}</span>
+                          <small>
+                            {section.quiz.questionCount} questions
+                            {section.quiz.bestScore !== null && section.quiz.bestScore !== undefined &&
+                              " · best " + section.quiz.bestScore + "%"}
+                          </small>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

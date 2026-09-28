@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, Check, Eye, FileText, Image, ListVideo, Rocket, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Check, Eye, FileText, Image, ListVideo, Rocket, ShieldAlert, Tag } from "lucide-react";
 import api, { getErrorMessage } from "../../api";
 import { useAuth } from "../../AuthContext";
 import Spinner from "../../components/Spinner";
@@ -10,6 +10,7 @@ import CourseDetailsForm from "./CourseDetailsForm";
 import CourseMediaForm from "./CourseMediaForm";
 import CurriculumEditor from "./CurriculumEditor";
 import PublishPanel from "./PublishPanel";
+import CouponManager from "../../components/CouponManager";
 
 // Course editor with 4 steps on the left: details, media, curriculum and publish.
 function CourseEditorPage() {
@@ -85,6 +86,9 @@ function CourseEditorPage() {
     { key: "publish", label: "Publish", icon: Rocket, done: course.isPublished },
   ];
   const doneCount = tabs.filter((tab) => tab.done).length;
+  const stepCount = tabs.length;
+  // An extra tab that is not a step towards publishing.
+  tabs.push({ key: "coupons", label: "Coupons", icon: Tag, done: false });
 
   return (
     <div>
@@ -109,9 +113,9 @@ function CourseEditorPage() {
         <nav className="editor-steps card">
           <div className="editor-steps-progress">
             <small>
-              {doneCount} of {tabs.length} steps done
+              {doneCount} of {stepCount} steps done
             </small>
-            <ProgressBar percent={(doneCount * 100) / tabs.length} />
+            <ProgressBar percent={(doneCount * 100) / stepCount} />
           </div>
           {tabs.map(function (tab) {
             const Icon = tab.icon;
@@ -137,6 +141,12 @@ function CourseEditorPage() {
           {activeTab === "media" && <CourseMediaForm course={course} onChanged={loadCourse} />}
           {activeTab === "curriculum" && <CurriculumEditor course={course} onChanged={loadCourse} />}
           {activeTab === "publish" && <PublishPanel course={course} onChanged={loadCourse} />}
+          {activeTab === "coupons" && (
+            <div>
+              <h2>Coupons</h2>
+              <CouponManager courseId={course.id} />
+            </div>
+          )}
         </section>
       </div>
     </div>

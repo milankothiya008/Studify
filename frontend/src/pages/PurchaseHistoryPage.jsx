@@ -95,7 +95,14 @@ function PurchaseHistoryPage() {
                                 {payment.paymentType}
                               </span>
                             </td>
-                            <td>{formatMoney(payment.amount)}</td>
+                            <td>
+                              {formatMoney(payment.amount)}
+                              {payment.discountAmount > 0 && (
+                                <div className="muted small">
+                                  <s>{formatMoney(payment.originalAmount)}</s> · {payment.couponCode}
+                                </div>
+                              )}
+                            </td>
                             <td>
                               <span className="badge badge-success">{payment.status}</span>
                             </td>

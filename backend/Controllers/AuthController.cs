@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using SmartLearning.Api.Data;
 using SmartLearning.Api.Dtos;
@@ -18,6 +19,7 @@ namespace SmartLearning.Api.Controllers
     //   1. POST forgot-password -> a 6-digit code is emailed
     //   2. POST reset-password  -> the code is checked, the password is changed, the user is logged in
     [Route("api/auth")]
+    [EnableRateLimiting("auth")] // see Program.cs: at most 20 requests per minute per IP address
     public class AuthController : BaseApiController
     {
         private readonly AppDbContext _db;
@@ -208,7 +210,9 @@ namespace SmartLearning.Api.Controllers
         }
 
         // GET api/auth/me  -> the logged in user
+        // Called on every page load, so it is not rate limited like the login endpoints.
         [Authorize]
+        [DisableRateLimiting]
         [HttpGet("me")]
         public async Task<ActionResult<UserDto>> Me()
         {

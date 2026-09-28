@@ -23,6 +23,15 @@ namespace SmartLearning.Api.Data
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<EmailCode> EmailCodes { get; set; }
+        public DbSet<Coupon> Coupons { get; set; }
+        public DbSet<Question> Questions { get; set; }
+        public DbSet<Answer> Answers { get; set; }
+        public DbSet<Note> Notes { get; set; }
+        public DbSet<Quiz> Quizzes { get; set; }
+        public DbSet<QuizQuestion> QuizQuestions { get; set; }
+        public DbSet<QuizAttempt> QuizAttempts { get; set; }
+        public DbSet<WishlistItem> WishlistItems { get; set; }
+        public DbSet<Notification> Notifications { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -84,6 +93,51 @@ namespace SmartLearning.Api.Data
             // One-time codes are always looked up by email + purpose.
             modelBuilder.Entity<EmailCode>()
                 .HasIndex(c => new { c.Email, c.Purpose });
+
+            // ---------- Coupons ----------
+            modelBuilder.Entity<Coupon>()
+                .HasIndex(c => c.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Coupon>()
+                .HasOne(c => c.CreatedBy)
+                .WithMany()
+                .HasForeignKey(c => c.CreatedById)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Payment>().Property(p => p.OriginalAmount).HasPrecision(10, 2);
+            modelBuilder.Entity<Payment>().Property(p => p.DiscountAmount).HasPrecision(10, 2);
+
+            // Keep the payment even if its coupon is deleted.
+            modelBuilder.Entity<Payment>()
+                .HasOne(p => p.Coupon)
+                .WithMany()
+                .HasForeignKey(p => p.CouponId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ---------- Q&A ----------
+            // If the lecture is deleted, the question stays as a general course question.
+            modelBuilder.Entity<Question>()
+                .HasOne(q => q.Lecture)
+                .WithMany()
+                .HasForeignKey(q => q.LectureId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // ---------- Quizzes: one quiz per section ----------
+            modelBuilder.Entity<Quiz>()
+                .HasOne(q => q.Section)
+                .WithOne(s => s.Quiz)
+                .HasForeignKey<Quiz>(q => q.SectionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // ---------- Wishlist: a course only once per user ----------
+            modelBuilder.Entity<WishlistItem>()
+                .HasIndex(w => new { w.UserId, w.CourseId })
+                .IsUnique();
+
+            // ---------- Notifications are read per user, newest first ----------
+            modelBuilder.Entity<Notification>()
+                .HasIndex(n => new { n.UserId, n.CreatedAt });
 
             // A plan that someone has bought cannot be deleted (deactivate it instead).
             modelBuilder.Entity<UserSubscription>()

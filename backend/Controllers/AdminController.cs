@@ -100,7 +100,7 @@ namespace SmartLearning.Api.Controllers
 
             if (added == 0)
             {
-                return Ok(new { added = 0, message = "All demo courses are already there." });
+                return Ok(new { added = 0, message = "Demo content is up to date (courses, quizzes and coupons)." });
             }
             string word = added == 1 ? " demo course added." : " demo courses added.";
             return Ok(new { added = added, message = added + word });

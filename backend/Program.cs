@@ -1,5 +1,6 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +36,7 @@ builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddScoped<CourseAccessService>();
 builder.Services.AddScoped<OtpService>();
 builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<CouponService>();
 
 // EmailService gets its own HttpClient to call the Brevo email API.
 builder.Services.AddHttpClient<EmailService>(client =>
@@ -107,6 +109,28 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
+});
+
+// ---------------- Rate limiting ----------------
+// Stops password guessing and code guessing: each IP address can call the login /
+// sign-up / code endpoints at most 20 times per minute. After that it gets "429 Too Many Requests".
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = 429;
+    options.AddPolicy("auth", httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            key => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 20,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        await context.HttpContext.Response.WriteAsync(
+            "{\"message\":\"Too many attempts. Please wait a minute and try again.\"}", token);
+    };
 });
 
 // ---------------- Running behind a proxy (Railway, Render ...) ----------------
@@ -182,6 +206,7 @@ using (IServiceScope scope = app.Services.CreateScope())
 app.UseForwardedHeaders();
 app.UseStaticFiles();        // serves wwwroot/uploads (used when Cloudinary is not configured)
 app.UseCors("ReactApp");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

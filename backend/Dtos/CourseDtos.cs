@@ -58,6 +58,9 @@ namespace SmartLearning.Api.Dtos
         public string Title { get; set; }
         public int OrderIndex { get; set; }
         public List<LectureDto> Lectures { get; set; }
+
+        // The quiz at the end of the section, or null.
+        public QuizInfoDto Quiz { get; set; }
     }
 
     // Everything the course landing page needs.

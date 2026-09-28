@@ -14,5 +14,8 @@ namespace SmartLearning.Api.Models
         public int OrderIndex { get; set; }
 
         public List<Lecture> Lectures { get; set; } = new List<Lecture>();
+
+        // Optional quiz at the end of the section.
+        public Quiz Quiz { get; set; }
     }
 }

@@ -18,9 +18,16 @@ namespace SmartLearning.Api.Models
         public int? PlanId { get; set; }
         public SubscriptionPlan Plan { get; set; }
 
+        // Price before the coupon, the discount, and what was actually paid.
+        public decimal OriginalAmount { get; set; }
+        public decimal DiscountAmount { get; set; }
         public decimal Amount { get; set; }
 
-        // Always "Paid" in the demo. A real gateway would also use "Pending" and "Failed".
+        // The coupon used for this purchase, if any.
+        public int? CouponId { get; set; }
+        public Coupon Coupon { get; set; }
+
+        // Always "Paid" in the demo.
         public string Status { get; set; }
 
         // Fake transaction id for the demo, e.g. "DEMO-3F2A1B..."

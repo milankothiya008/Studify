@@ -32,11 +32,14 @@ namespace SmartLearning.Api.Services
         }
 
         // Builds the curriculum (sections + lectures) of a course.
-        // The course must be loaded with .Include(c => c.Sections).ThenInclude(s => s.Lectures).
+        // The course must be loaded with .Include(c => c.Sections).ThenInclude(s => s.Lectures)
+        // and .Include(c => c.Sections).ThenInclude(s => s.Quiz).ThenInclude(q => q.Questions).
         //
         // canWatch = false hides every video link except the free previews.
         // progressList = the user's progress rows (can be an empty list).
-        public static List<SectionDto> BuildSections(Course course, bool canWatch, List<LectureProgress> progressList)
+        // quizAttempts = the user's quiz attempts in this course (can be an empty list).
+        public static List<SectionDto> BuildSections(Course course, bool canWatch, List<LectureProgress> progressList,
+            List<QuizAttempt> quizAttempts)
         {
             List<SectionDto> sections = new List<SectionDto>();
 
@@ -69,6 +72,20 @@ namespace SmartLearning.Api.Services
                         IsCompleted = progress != null && progress.IsCompleted,
                         WatchedSeconds = progress != null ? progress.WatchedSeconds : 0
                     });
+                }
+
+                if (section.Quiz != null)
+                {
+                    List<QuizAttempt> attempts = quizAttempts.Where(a => a.QuizId == section.Quiz.Id).ToList();
+                    sectionDto.Quiz = new QuizInfoDto
+                    {
+                        Id = section.Quiz.Id,
+                        Title = section.Quiz.Title,
+                        QuestionCount = section.Quiz.Questions.Count,
+                        PassPercent = section.Quiz.PassPercent,
+                        BestScore = attempts.Count > 0 ? attempts.Max(a => a.ScorePercent) : null,
+                        Passed = attempts.Any(a => a.Passed)
+                    };
                 }
 
                 sections.Add(sectionDto);

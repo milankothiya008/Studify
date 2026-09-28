@@ -31,6 +31,7 @@ function Footer() {
           <Link to="/profile">Account settings</Link>
           <Link to="/purchases">Purchase history</Link>
           <Link to="/forgot-password">Forgot password</Link>
+          <Link to="/verify">Verify a certificate</Link>
         </div>
       </div>
 

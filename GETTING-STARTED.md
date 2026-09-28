@@ -12,6 +12,19 @@ frontend. The code is kept simple on purpose, so it is easy to read and learn fr
 - **Admins** see platform statistics and manage users, categories and subscription plans.
 - **Emails**: sign up is verified with a 6-digit code (OTP), "Forgot password?" resets the
   password with a code, and students get an email when they enroll or buy a course or plan.
+- **Quizzes**: instructors add a multiple-choice quiz to any section; students get instant
+  scores with explanations, and their best score is shown in the curriculum.
+- **Q&A**: students ask questions on a lecture; the instructor and other students answer. The
+  asker gets a notification and an email; instructors have an inbox of unanswered questions.
+- **Notes**: private, time-stamped notes in the video player. Clicking a note jumps to that moment.
+- **Coupons**: instructors create discount codes for their courses; admins for all courses or plans.
+  Codes can expire and have a usage limit.
+- **Notifications**: a bell with unread counts (new answers, new questions, enrollments, payments).
+- **Wishlist**: save courses for later with the heart button.
+- **Certificates you can verify**: every certificate has a public page (`/verify/SL-...`) and an
+  "Add to LinkedIn" button.
+- **Instructor analytics**: new students and revenue per day (7, 30 or 90 days).
+- **Rate limiting**: login, sign-up and code endpoints accept at most 20 requests per minute per IP.
 
 > This project lives next to the older MVC app in `src/`. The two do not share code or a database.
 
@@ -185,6 +198,18 @@ connect Razorpay or Stripe later.
 | POST / PUT / DELETE | `/api/instructor/courses/{id}/sections`, `/api/instructor/sections/{id}` (+ `/move`) | instructor |
 | POST / PUT / DELETE | `/api/instructor/sections/{id}/lectures`, `/api/instructor/lectures/{id}` (+ `/video`, `/move`) | instructor |
 | GET / PUT | `/api/admin/stats`, `/api/admin/users`, `/api/admin/users/{id}/role`, `/api/admin/courses` | admin |
+| POST | `/api/admin/demo-courses` (adds missing demo courses, quizzes and coupons) | admin |
+| POST | `/api/checkout/preview` (price with a coupon) | logged in |
+| GET / POST / PUT / DELETE | `/api/coupons`, `/api/coupons/{id}` | instructor (own courses), admin |
+| GET / POST | `/api/courses/{id}/questions`, `/api/questions/{id}`, `/api/questions/{id}/answers` | students with access, instructor |
+| DELETE | `/api/questions/{id}`, `/api/answers/{id}` | author, instructor, admin |
+| GET | `/api/instructor/questions?unanswered=true`, `/api/instructor/analytics?days=30` | instructor |
+| GET / POST / PUT / DELETE | `/api/courses/{id}/notes`, `/api/lectures/{id}/notes`, `/api/notes/{id}` | the note's owner |
+| POST / PUT / DELETE | `/api/instructor/sections/{id}/quiz`, `/api/instructor/quizzes/{id}` (+ `/questions`), `/api/instructor/quiz-questions/{id}` | instructor |
+| GET / POST | `/api/learn/quizzes/{id}`, `/api/learn/quizzes/{id}/attempts` | students with access |
+| GET / POST / DELETE | `/api/wishlist`, `/api/wishlist/ids`, `/api/wishlist/{courseId}` | logged in |
+| GET / POST | `/api/notifications`, `/api/notifications/{id}/read`, `/api/notifications/read-all` | logged in |
+| GET | `/api/certificates/{number}` | anyone |
 | POST / PUT / DELETE | `/api/categories/{id}`, `/api/plans/{id}` | admin |
 
 ## Changing the database
@@ -243,6 +268,8 @@ Notes:
 - The demo-account buttons on the login page appear only on your computer (`npm run dev`).
 
 ## Security notes
+
+- Quiz answers are graded on the server; the correct answers are never sent before submitting.
 
 - Changing a password, or an admin changing someone's role, logs that user out everywhere
   (older login tokens stop working).

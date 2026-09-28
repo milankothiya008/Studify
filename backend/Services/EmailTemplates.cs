@@ -90,6 +90,27 @@ namespace SmartLearning.Api.Services
             };
         }
 
+        public static EmailMessage QuestionAnswered(string name, string answeredBy, string questionTitle,
+            string answerText, string courseTitle, string link)
+        {
+            string shortAnswer = answerText.Length > 400 ? answerText.Substring(0, 400) + "..." : answerText;
+
+            return new EmailMessage
+            {
+                Subject = "New answer: " + questionTitle,
+                Html = Layout("Your question was answered",
+                    "<p>Hi " + Encode(name) + ",</p>"
+                    + "<p><strong>" + Encode(answeredBy) + "</strong> answered your question in <strong>"
+                    + Encode(courseTitle) + "</strong>:</p>"
+                    + "<p style=\"font-weight:700;margin-bottom:4px\">" + Encode(questionTitle) + "</p>"
+                    + "<div style=\"background:#f5f3ff;border-left:4px solid #7c3aed;padding:12px 16px;border-radius:8px;white-space:pre-line\">"
+                    + Encode(shortAnswer) + "</div>"
+                    + Button("View the discussion", link)),
+                Text = "Hi " + name + ",\n\n" + answeredBy + " answered your question \"" + questionTitle + "\" in "
+                    + courseTitle + ":\n\n" + shortAnswer + "\n\nView the discussion: " + link
+            };
+        }
+
         // ---------- building blocks ----------
 
         private static string Encode(string text)

@@ -65,6 +65,55 @@ namespace SmartLearning.Api.Controllers
             return Ok(dashboard);
         }
 
+        // GET api/instructor/analytics?days=30  -> enrollments and revenue per day
+        [HttpGet("analytics")]
+        public async Task<ActionResult<InstructorAnalyticsDto>> GetAnalytics(int days = 30)
+        {
+            if (days < 7) days = 7;
+            if (days > 365) days = 365;
+
+            int userId = GetUserId();
+            DateTime firstDay = DateTime.UtcNow.Date.AddDays(-(days - 1));
+
+            // Load the raw rows, then count them per day in C#.
+            List<DateTime> enrollmentDates = await _db.Enrollments
+                .Where(e => e.Course.InstructorId == userId && e.EnrolledAt >= firstDay)
+                .Select(e => e.EnrolledAt)
+                .ToListAsync();
+
+            List<Payment> payments = await _db.Payments
+                .Where(p => p.Course.InstructorId == userId && p.Status == "Paid" && p.CreatedAt >= firstDay)
+                .ToListAsync();
+
+            List<DailyStatDto> daily = new List<DailyStatDto>();
+            for (int i = 0; i < days; i++)
+            {
+                DateTime day = firstDay.AddDays(i);
+                daily.Add(new DailyStatDto
+                {
+                    Date = day.ToString("yyyy-MM-dd"),
+                    Enrollments = enrollmentDates.Count(d => d.Date == day),
+                    Revenue = payments.Where(p => p.CreatedAt.Date == day).Sum(p => p.Amount)
+                });
+            }
+
+            int completed = await _db.Enrollments
+                .CountAsync(e => e.Course.InstructorId == userId && e.CompletedAt != null);
+
+            int unanswered = await _db.Questions
+                .CountAsync(q => q.Course.InstructorId == userId && !q.Answers.Any(a => a.UserId == userId));
+
+            return Ok(new InstructorAnalyticsDto
+            {
+                Days = days,
+                Enrollments = enrollmentDates.Count,
+                Revenue = payments.Sum(p => p.Amount),
+                CompletedStudents = completed,
+                UnansweredQuestions = unanswered,
+                Daily = daily
+            });
+        }
+
         // POST api/instructor/courses  -> creates a new draft course
         [HttpPost("courses")]
         public async Task<ActionResult> CreateCourse(CourseSaveRequest request)

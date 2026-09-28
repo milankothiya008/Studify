@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { AlertCircle, CheckCircle2, CreditCard, Lock, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import { AlertCircle, CheckCircle2, CreditCard, Lock, Mail, ShieldCheck, Sparkles, Tag, X } from "lucide-react";
 import api, { getErrorMessage } from "../api";
 import PageHeader from "../components/PageHeader";
 import Spinner from "../components/Spinner";
@@ -17,6 +17,12 @@ function CheckoutPage() {
   const [payError, setPayError] = useState("");
   const [paying, setPaying] = useState(false);
   const [result, setResult] = useState(null); // answer from the API after paying
+
+  // Coupon code
+  const [couponInput, setCouponInput] = useState("");
+  const [price, setPrice] = useState(null); // { originalAmount, discountAmount, finalAmount, couponCode, ... }
+  const [couponError, setCouponError] = useState("");
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
 
   useEffect(
     function () {
@@ -59,11 +65,50 @@ function CheckoutPage() {
     [type, id]
   );
 
+  // Asks the server for the price with (or without) a coupon code.
+  async function loadPrice(code) {
+    const response = await api.post("/checkout/preview", { itemType: type, itemId: Number(id), couponCode: code });
+    setPrice(response.data);
+    return response.data;
+  }
+
+  // The price without a coupon, as soon as the item is known.
+  useEffect(
+    function () {
+      if (item && !item.alreadyOwned) {
+        loadPrice("").catch(function () {});
+      }
+    },
+    [item]
+  );
+
+  async function applyCoupon(event) {
+    event.preventDefault();
+    setCouponError("");
+    setCheckingCoupon(true);
+    try {
+      const preview = await loadPrice(couponInput);
+      if (preview.couponError) {
+        setCouponError(preview.couponError);
+      }
+    } catch (err) {
+      setCouponError(getErrorMessage(err));
+    }
+    setCheckingCoupon(false);
+  }
+
+  function removeCoupon() {
+    setCouponInput("");
+    setCouponError("");
+    loadPrice("").catch(function () {});
+  }
+
   async function handlePay() {
     setPaying(true);
     setPayError("");
     try {
-      const response = await api.post("/checkout/" + type + "/" + id);
+      const couponCode = price && price.couponApplied ? price.couponCode : "";
+      const response = await api.post("/checkout/" + type + "/" + id, { couponCode: couponCode });
       setResult(response.data);
     } catch (err) {
       setPayError(getErrorMessage(err));
@@ -83,8 +128,9 @@ function CheckoutPage() {
           <p>{result.message}</p>
           <div className="receipt">
             <div>
-              <span>Amount</span>
+              <span>Amount paid</span>
               <strong>{formatMoney(result.amount)}</strong>
+              {result.discountAmount > 0 && <small className="saved-text">You saved {formatMoney(result.discountAmount)}</small>}
             </div>
             <div>
               <span>Transaction</span>
@@ -188,10 +234,44 @@ function CheckoutPage() {
               <span>Price</span>
               <span>{formatMoney(item.price)}</span>
             </div>
+            {price && price.couponApplied && (
+              <div className="summary-row discount">
+                <span>
+                  <Tag size={14} /> {price.couponCode} ({price.discountPercent}% off)
+                </span>
+                <span>-{formatMoney(price.discountAmount)}</span>
+              </div>
+            )}
             <div className="summary-row total">
               <span>Total</span>
-              <span>{formatMoney(item.price)}</span>
+              <span>{formatMoney(price ? price.finalAmount : item.price)}</span>
             </div>
+
+            {/* Coupon code */}
+            {price && price.couponApplied ? (
+              <div className="coupon-applied">
+                <Tag size={16} />
+                <span>
+                  <strong>{price.couponCode}</strong> applied
+                </span>
+                <button className="icon-button" onClick={removeCoupon} aria-label="Remove coupon">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <form className="coupon-form" onSubmit={applyCoupon}>
+                <input
+                  placeholder="Coupon code"
+                  value={couponInput}
+                  onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                  maxLength={40}
+                />
+                <button type="submit" className="btn btn-outline" disabled={!couponInput.trim() || checkingCoupon}>
+                  Apply
+                </button>
+              </form>
+            )}
+            {couponError && <p className="coupon-error">{couponError}</p>}
 
             {payError && (
               <div className="alert alert-error">
@@ -201,7 +281,7 @@ function CheckoutPage() {
 
             <button className="btn btn-primary btn-block btn-large" onClick={handlePay} disabled={paying}>
               {paying ? <span className="btn-spinner"></span> : <Lock size={18} />}
-              {paying ? "Processing..." : "Pay " + formatMoney(item.price)}
+              {paying ? "Processing..." : "Pay " + formatMoney(price ? price.finalAmount : item.price)}
             </button>
             <p className="secure-note">
               <ShieldCheck size={16} /> Demo checkout · no card details needed

@@ -6,7 +6,9 @@ import {
   Compass,
   CreditCard,
   GraduationCap,
+  Heart,
   LayoutDashboard,
+  MessageCircleQuestion,
   LogOut,
   Menu,
   Receipt,
@@ -17,6 +19,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import Avatar from "./Avatar";
+import NotificationBell from "./NotificationBell";
 
 function Navbar() {
   const { user, logout } = useAuth();
@@ -121,6 +124,14 @@ function Navbar() {
               </NavLink>
             )}
 
+            {user && (
+              <NavLink to="/wishlist" className="icon-button nav-icon hide-mobile" title="Wishlist" aria-label="Wishlist">
+                <Heart size={21} />
+              </NavLink>
+            )}
+
+            {user && <NotificationBell />}
+
             {!user && (
               <div className="nav-buttons hide-mobile">
                 <Link to="/login" className="btn btn-outline btn-small">
@@ -156,9 +167,17 @@ function Navbar() {
                     <Link to="/my-learning">
                       <BookOpen size={18} /> My learning
                     </Link>
+                    <Link to="/wishlist">
+                      <Heart size={18} /> Wishlist
+                    </Link>
                     {isInstructor && (
                       <Link to="/instructor">
                         <LayoutDashboard size={18} /> Instructor dashboard
+                      </Link>
+                    )}
+                    {isInstructor && (
+                      <Link to="/instructor/questions">
+                        <MessageCircleQuestion size={18} /> Student questions
                       </Link>
                     )}
                     {isAdmin && (
@@ -225,6 +244,11 @@ function Navbar() {
               {user && (
                 <Link to="/my-learning">
                   <BookOpen size={20} /> My learning
+                </Link>
+              )}
+              {user && (
+                <Link to="/wishlist">
+                  <Heart size={20} /> Wishlist
                 </Link>
               )}
               {isInstructor && (

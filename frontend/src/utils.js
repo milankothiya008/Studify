@@ -9,12 +9,18 @@ export function formatPrice(price) {
   if (Number(price) === 0) {
     return "Free";
   }
-  return CURRENCY_SYMBOL + Number(price).toLocaleString(NUMBER_LOCALE);
+  return formatMoney(price);
 }
 
 // Same as formatPrice, but 0 -> "₹0" (used on receipts)
 export function formatMoney(amount) {
-  return CURRENCY_SYMBOL + Number(amount).toLocaleString(NUMBER_LOCALE);
+  const number = Number(amount);
+  // Whole rupees without decimals (₹1,999), otherwise always 2 decimals (₹1,599.20).
+  const decimals = number % 1 === 0 ? 0 : 2;
+  return CURRENCY_SYMBOL + number.toLocaleString(NUMBER_LOCALE, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: 2,
+  });
 }
 
 // Length of one lecture: 75 -> "1:15"
@@ -48,6 +54,27 @@ export function formatDate(dateText) {
     month: "short",
     year: "numeric",
   });
+}
+
+// "2 minutes ago", "3 hours ago", "5 days ago", or the date for older things.
+export function timeAgo(dateText) {
+  const seconds = Math.floor((Date.now() - new Date(dateText).getTime()) / 1000);
+  if (seconds < 60) {
+    return "just now";
+  }
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) {
+    return minutes + (minutes === 1 ? " minute ago" : " minutes ago");
+  }
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) {
+    return hours + (hours === 1 ? " hour ago" : " hours ago");
+  }
+  const days = Math.floor(hours / 24);
+  if (days < 30) {
+    return days + (days === 1 ? " day ago" : " days ago");
+  }
+  return formatDate(dateText);
 }
 
 // Text with one item per line -> array of non-empty lines

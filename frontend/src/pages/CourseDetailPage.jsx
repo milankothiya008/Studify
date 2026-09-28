@@ -9,6 +9,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ClipboardCheck,
   Globe,
   Infinity as InfinityIcon,
   PlayCircle,
@@ -25,6 +26,7 @@ import StarRating from "../components/StarRating";
 import Avatar from "../components/Avatar";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
+import WishlistButton from "../components/WishlistButton";
 import { formatClock, formatDate, formatDuration, formatPrice, splitLines } from "../utils";
 
 // The course landing page (like a Udemy course page).
@@ -247,6 +249,14 @@ function CourseDetailPage() {
                             </li>
                           );
                         })}
+                        {section.quiz && (
+                          <li className="quiz-row">
+                            <span className="lecture-name">
+                              <ClipboardCheck size={16} /> Quiz: {section.quiz.title}
+                            </span>
+                            <span className="muted">{section.quiz.questionCount} questions</span>
+                          </li>
+                        )}
                       </ul>
                     </div>
                   </div>
@@ -435,6 +445,8 @@ function CourseDetailPage() {
                 )}
               </>
             )}
+
+            {!course.isOwner && !course.canWatch && <WishlistButton courseId={course.id} variant="button" />}
 
             <h4>This course includes</h4>
             <ul className="includes-list">

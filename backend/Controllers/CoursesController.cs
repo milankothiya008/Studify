@@ -110,6 +110,9 @@ namespace SmartLearning.Api.Controllers
                 .Include(c => c.Category)
                 .Include(c => c.Sections)
                     .ThenInclude(s => s.Lectures)
+                .Include(c => c.Sections)
+                    .ThenInclude(s => s.Quiz)
+                        .ThenInclude(q => q.Questions)
                 .FirstOrDefaultAsync(c => c.Id == id);
 
             if (course == null)
@@ -141,7 +144,7 @@ namespace SmartLearning.Api.Controllers
             List<Review> reviews = await _db.Reviews.Where(r => r.CourseId == id).ToListAsync();
             int studentCount = await _db.Enrollments.CountAsync(e => e.CourseId == id);
 
-            List<SectionDto> sections = CourseMapper.BuildSections(course, canWatch, new List<LectureProgress>());
+            List<SectionDto> sections = CourseMapper.BuildSections(course, canWatch, new List<LectureProgress>(), new List<QuizAttempt>());
 
             CourseDetailDto dto = new CourseDetailDto
             {

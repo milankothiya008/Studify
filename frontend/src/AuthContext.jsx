@@ -21,8 +21,12 @@ export function AuthProvider({ children }) {
       .then(function (response) {
         setUser(response.data);
       })
-      .catch(function () {
-        localStorage.removeItem("token");
+      .catch(function (error) {
+        // Only a rejected login (401) is removed. For other problems (server down,
+        // too many requests ...) the token is kept, so the user stays logged in.
+        if (error.response && error.response.status === 401) {
+          localStorage.removeItem("token");
+        }
       })
       .finally(function () {
         setLoading(false);
