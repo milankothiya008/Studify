@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -8,6 +9,8 @@ import CoursesPage from "./pages/CoursesPage";
 import CourseDetailPage from "./pages/CourseDetailPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import MyLearningPage from "./pages/MyLearningPage";
 import CoursePlayerPage from "./pages/CoursePlayerPage";
 import PlansPage from "./pages/PlansPage";
@@ -20,17 +23,28 @@ import InstructorDashboardPage from "./pages/instructor/InstructorDashboardPage"
 import CourseEditorPage from "./pages/instructor/CourseEditorPage";
 import AdminPage from "./pages/admin/AdminPage";
 
+// Pages that use the whole screen and have no footer.
+const FULL_SCREEN_PAGES = ["/learn/", "/login", "/register", "/verify-email", "/forgot-password"];
+
 function App() {
   const location = useLocation();
 
-  // The course player uses the whole screen, so it has no footer.
-  const isPlayerPage = location.pathname.startsWith("/learn/");
+  // Start every new page at the top.
+  useEffect(
+    function () {
+      window.scrollTo(0, 0);
+    },
+    [location.pathname]
+  );
+
+  const isFullScreen = FULL_SCREEN_PAGES.some((path) => location.pathname.startsWith(path));
 
   return (
     <div className="app">
       <Navbar />
 
-      <main className="main-content">
+      {/* key = the address, so each new page plays the fade-in animation */}
+      <main className="main-content page-transition" key={location.pathname}>
         <Routes>
           {/* Pages for everyone */}
           <Route path="/" element={<HomePage />} />
@@ -39,6 +53,8 @@ function App() {
           <Route path="/plans" element={<PlansPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
           {/* Pages for logged in users */}
           <Route path="/my-learning" element={<ProtectedRoute><MyLearningPage /></ProtectedRoute>} />
@@ -65,7 +81,7 @@ function App() {
         </Routes>
       </main>
 
-      {!isPlayerPage && <Footer />}
+      {!isFullScreen && <Footer />}
     </div>
   );
 }

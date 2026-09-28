@@ -10,6 +10,8 @@ frontend. The code is kept simple on purpose, so it is easy to read and learn fr
 - **Progress tracking**: the player remembers where you stopped in each video, ticks
   lectures when they are completed, shows a progress bar, and gives a certificate at 100%.
 - **Admins** see platform statistics and manage users, categories and subscription plans.
+- **Emails**: sign up is verified with a 6-digit code (OTP), "Forgot password?" resets the
+  password with a code, and students get an email when they enroll or buy a course or plan.
 
 > This project lives next to the older MVC app in `src/`. The two do not share code or a database.
 
@@ -20,16 +22,17 @@ backend/                      ASP.NET Core Web API (.NET 10)
   Controllers/                API endpoints, one class per feature
   Models/                     Database tables (Entity Framework classes)
   Dtos/                       Shapes of the JSON sent to / from the React app
-  Services/                   Login tokens, file uploads, access rules
+  Services/                   Login tokens, file uploads, access rules, emails and codes
   Data/                       DbContext, demo data (DbSeeder), migrations
   appsettings.json            <- YOUR PASSWORDS AND KEYS GO HERE
 frontend/                     React app (Vite)
   src/pages/                  One file per page
   src/pages/instructor/       Course editor (details, media, curriculum, publish)
   src/pages/admin/            Admin panel
-  src/components/             Navbar, course card, rating stars, ...
+  src/components/             Navbar, course card, page header, code input, skeletons, ...
   src/api.js                  Axios setup (adds the login token to every request)
-  src/AuthContext.jsx         Keeps the logged in user
+  src/AuthContext.jsx         Keeps the logged in user (login, sign up, verify, reset)
+  src/ToastContext.jsx        Small pop-up messages ("Saved!")
   src/index.css               All styles
 ```
 
@@ -51,6 +54,7 @@ comment and starts with `YOUR_`:
 | `ConnectionStrings:DefaultConnection` → `Password=YOUR_POSTGRES_PASSWORD` | The password you chose when you installed PostgreSQL |
 | `Jwt:Key` | Any long random text (at least 32 characters) |
 | `Cloudinary:CloudName`, `ApiKey`, `ApiSecret` | Your Cloudinary keys (see below). **Optional.** |
+| `Email:BrevoApiKey`, `Email:SenderEmail` | Your Brevo key and verified sender email (see below). **Optional.** |
 
 **Cloudinary is optional.** While the Cloudinary values still start with `YOUR_`,
 uploaded files are saved in `backend/wwwroot/uploads/` instead. So you can try
@@ -64,6 +68,25 @@ everything first and add Cloudinary later.
 4. Restart the backend. New uploads now go to your Cloudinary account (folder `smartlearn/`).
 
 The free plan accepts **videos up to 100 MB each**.
+
+### Getting a free Brevo key (for emails)
+
+Emails (sign-up codes, password reset codes, enrollment and subscription confirmations)
+are sent with [Brevo](https://www.brevo.com). The free plan sends 300 emails per day.
+Brevo is used instead of Gmail SMTP because Railway blocks SMTP on its Trial and Hobby plans,
+while Brevo is called over normal HTTPS.
+
+1. Create a free account at https://www.brevo.com.
+2. Go to **Senders, Domains & Dedicated IPs → Senders**, add your email address (for example
+   your Gmail) and confirm it from the email Brevo sends you.
+3. Go to **SMTP & API → API Keys**, click **Generate a new API key**, and copy it.
+4. Put the key in `Email:BrevoApiKey` and your verified address in `Email:SenderEmail`.
+
+**Brevo is optional while testing.** Without it, nothing is emailed: every email, including
+the 6-digit code, is written to the backend console instead, so you can still sign up.
+
+> Emails sent "from" a Gmail address through another service sometimes land in spam.
+> Tell testers to check the spam folder, or verify your own domain in Brevo later.
 
 > **Don't push real passwords or keys to a public GitHub repo.** A safer option is .NET
 > "user secrets", which keeps them outside the project folder:
@@ -143,7 +166,8 @@ connect Razorpay or Stripe later.
 
 | Method | URL | Who |
 | --- | --- | --- |
-| POST | `/api/auth/register`, `/api/auth/login` | anyone |
+| POST | `/api/auth/register`, `/api/auth/verify-email`, `/api/auth/resend-code`, `/api/auth/login` | anyone |
+| POST | `/api/auth/forgot-password`, `/api/auth/reset-password` | anyone |
 | GET | `/api/auth/me` | logged in |
 | GET | `/api/courses?search=&categoryId=&level=&price=free\|paid&sort=&page=` | anyone |
 | GET | `/api/courses/{id}` (landing page + curriculum) | anyone |
@@ -197,6 +221,7 @@ To start over with fresh demo data, delete the database and run the backend agai
    | `ConnectionStrings__DefaultConnection` | the Neon connection string |
    | `Jwt__Key` | a long random secret (32+ characters) |
    | `Cloudinary__CloudName`, `Cloudinary__ApiKey`, `Cloudinary__ApiSecret` | your Cloudinary keys |
+   | `Email__BrevoApiKey`, `Email__SenderEmail` | your Brevo key and verified sender (without them, sign-up codes only appear in the server log) |
    | `DemoPassword` | a strong password for the 3 demo accounts (including the admin) |
    | `FrontendUrl` | your Vercel address (step 4) |
 
@@ -216,6 +241,13 @@ Notes:
   visit then takes around a minute to wake it.
 - When you change a Vercel environment variable, redeploy for it to take effect.
 - The demo-account buttons on the login page appear only on your computer (`npm run dev`).
+
+## Security notes
+
+- Changing a password, or an admin changing someone's role, logs that user out everywhere
+  (older login tokens stop working).
+- Sign-up and reset codes expire after 10 minutes, allow 5 wrong tries, and can be re-sent once a minute.
+- "Forgot password" gives the same answer whether an email is registered or not.
 
 ## Known limitations
 

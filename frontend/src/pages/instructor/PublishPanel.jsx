@@ -1,21 +1,41 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AlertCircle, Check, EyeOff, Rocket, Trash2, X } from "lucide-react";
 import api, { getErrorMessage } from "../../api";
+import { useToast } from "../../ToastContext";
 
-// The "Publish" tab: publish, unpublish or delete the course.
+// The "Publish" tab: a checklist, publish / unpublish, and delete the course.
 function PublishPanel({ course, onChanged }) {
   const navigate = useNavigate();
-  const [message, setMessage] = useState("");
+  const showToast = useToast();
   const [error, setError] = useState("");
   const [working, setWorking] = useState(false);
 
+  let hasVideo = false;
+  course.sections.forEach(function (section) {
+    section.lectures.forEach(function (lecture) {
+      if (lecture.hasVideo) {
+        hasVideo = true;
+      }
+    });
+  });
+
+  // The same rules the backend checks before publishing.
+  const checklist = [
+    { label: "Subtitle", done: Boolean(course.subtitle) },
+    { label: "Description", done: Boolean(course.description) },
+    { label: "Category", done: Boolean(course.categoryId) },
+    { label: "Course image", done: Boolean(course.thumbnailUrl) },
+    { label: "At least one lecture with a video", done: hasVideo },
+  ];
+  const readyToPublish = checklist.every((item) => item.done);
+
   async function runAction(url) {
-    setMessage("");
     setError("");
     setWorking(true);
     try {
       const response = await api.post(url);
-      setMessage(response.data.message);
+      showToast(response.data.message);
       onChanged();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -29,6 +49,7 @@ function PublishPanel({ course, onChanged }) {
     }
     try {
       await api.delete("/instructor/courses/" + course.id);
+      showToast("Course deleted.");
       navigate("/instructor");
     } catch (err) {
       setError(getErrorMessage(err));
@@ -45,13 +66,28 @@ function PublishPanel({ course, onChanged }) {
         </p>
       ) : (
         <p>
-          Your course is a <span className="badge badge-warning">Draft</span>. Only you can see it. Before publishing, add
-          a subtitle, description, category, course image and at least one lecture with a video.
+          Your course is a <span className="badge badge-warning">Draft</span>. Only you can see it until you publish it.
         </p>
       )}
 
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
+      {!course.isPublished && (
+        <ul className="publish-checklist">
+          {checklist.map(function (item) {
+            return (
+              <li key={item.label} className={item.done ? "done" : ""}>
+                <span className="checklist-icon">{item.done ? <Check size={14} /> : <X size={14} />}</span>
+                {item.label}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {error && (
+        <div className="alert alert-error">
+          <AlertCircle size={18} /> {error}
+        </div>
+      )}
 
       {course.isPublished ? (
         <button
@@ -59,25 +95,23 @@ function PublishPanel({ course, onChanged }) {
           disabled={working}
           onClick={() => runAction("/instructor/courses/" + course.id + "/unpublish")}
         >
-          Unpublish
+          <EyeOff size={18} /> Unpublish
         </button>
       ) : (
         <button
           className="btn btn-primary btn-large"
-          disabled={working}
+          disabled={working || !readyToPublish}
           onClick={() => runAction("/instructor/courses/" + course.id + "/publish")}
         >
-          Publish course
+          {working ? <span className="btn-spinner"></span> : <Rocket size={18} />} Publish course
         </button>
       )}
 
       <div className="danger-zone">
         <h3>Delete course</h3>
-        <p className="muted small">
-          You can delete a course only while no student is enrolled. Otherwise, unpublish it.
-        </p>
+        <p className="muted small">You can delete a course only while no student is enrolled. Otherwise, unpublish it.</p>
         <button className="btn btn-danger" onClick={handleDelete}>
-          Delete course
+          <Trash2 size={18} /> Delete course
         </button>
       </div>
     </div>

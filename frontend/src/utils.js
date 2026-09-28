@@ -95,6 +95,15 @@ export function getVideoDuration(file) {
   });
 }
 
+// Upload progress from axios' onUploadProgress, as a whole number from 0 to 100.
+// Some browsers don't send the total size; then we show 0 instead of "NaN%".
+export function getUploadPercent(progressEvent) {
+  if (!progressEvent.total) {
+    return 0;
+  }
+  return Math.round((progressEvent.loaded * 100) / progressEvent.total);
+}
+
 // Every lecture of a course in one flat list (sections one after another).
 export function getAllLectures(sections) {
   const lectures = [];

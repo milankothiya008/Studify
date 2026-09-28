@@ -1,16 +1,21 @@
 import { useEffect, useState } from "react";
+import { Star } from "lucide-react";
 import api, { getErrorMessage } from "../api";
 import { useAuth } from "../AuthContext";
+import { useToast } from "../ToastContext";
+
+const RATING_WORDS = ["", "Awful", "Poor", "Average", "Good", "Amazing"];
 
 // Lets an enrolled student rate a course (1 - 5 stars) and write a comment.
 // If the student already left a review, the form is filled with it so they can change it.
 function ReviewForm({ courseId }) {
   const { user } = useAuth();
+  const showToast = useToast();
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(
     function () {
@@ -27,7 +32,6 @@ function ReviewForm({ courseId }) {
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setMessage("");
     setError("");
 
     if (rating === 0) {
@@ -35,12 +39,14 @@ function ReviewForm({ courseId }) {
       return;
     }
 
+    setSaving(true);
     try {
       const response = await api.post("/courses/" + courseId + "/reviews", { rating: rating, comment: comment });
-      setMessage(response.data.message);
+      showToast(response.data.message);
     } catch (err) {
       setError(getErrorMessage(err));
     }
+    setSaving(false);
   }
 
   const shownRating = hoverRating || rating;
@@ -55,14 +61,16 @@ function ReviewForm({ courseId }) {
             <button
               type="button"
               key={star}
-              className={star <= shownRating ? "star filled" : "star"}
+              className={star <= shownRating ? "star-button filled" : "star-button"}
               onMouseEnter={() => setHoverRating(star)}
               onClick={() => setRating(star)}
+              aria-label={star + " stars"}
             >
-              ★
+              <Star size={34} />
             </button>
           );
         })}
+        <span className="rating-word">{RATING_WORDS[shownRating]}</span>
       </div>
 
       <textarea
@@ -70,13 +78,14 @@ function ReviewForm({ courseId }) {
         placeholder="Tell other students what you think about this course (optional)"
         value={comment}
         onChange={(e) => setComment(e.target.value)}
+        maxLength={2000}
       />
 
       {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
 
-      <button type="submit" className="btn btn-primary">
-        Save review
+      <button type="submit" className="btn btn-primary" disabled={saving}>
+        {saving && <span className="btn-spinner"></span>}
+        {saving ? "Saving..." : "Save review"}
       </button>
     </form>
   );

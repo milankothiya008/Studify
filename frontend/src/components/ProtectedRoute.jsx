@@ -1,6 +1,8 @@
 import { Navigate, useLocation } from "react-router-dom";
+import { ShieldAlert } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import Spinner from "./Spinner";
+import EmptyState from "./EmptyState";
 
 // Wrap a page with this to allow only logged in users (and optionally only some roles).
 // Example: <ProtectedRoute roles={["Admin"]}><AdminPage /></ProtectedRoute>
@@ -20,10 +22,11 @@ function ProtectedRoute({ children, roles }) {
   if (roles && !roles.includes(user.role)) {
     return (
       <div className="container page">
-        <div className="empty-state">
-          <h2>Access denied</h2>
-          <p>Your account ({user.role}) cannot open this page.</p>
-        </div>
+        <EmptyState
+          icon={ShieldAlert}
+          title="Access denied"
+          text={"Your account (" + user.role + ") cannot open this page."}
+        />
       </div>
     );
   }

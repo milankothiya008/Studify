@@ -22,6 +22,7 @@ namespace SmartLearning.Api.Data
         public DbSet<UserSubscription> UserSubscriptions { get; set; }
         public DbSet<Payment> Payments { get; set; }
         public DbSet<Review> Reviews { get; set; }
+        public DbSet<EmailCode> EmailCodes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -79,6 +80,10 @@ namespace SmartLearning.Api.Data
                 .WithMany()
                 .HasForeignKey(p => p.PlanId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            // One-time codes are always looked up by email + purpose.
+            modelBuilder.Entity<EmailCode>()
+                .HasIndex(c => new { c.Email, c.Purpose });
 
             // A plan that someone has bought cannot be deleted (deactivate it instead).
             modelBuilder.Entity<UserSubscription>()

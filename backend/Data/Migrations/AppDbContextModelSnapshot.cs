@@ -107,6 +107,42 @@ namespace SmartLearning.Api.Data.Migrations
                     b.ToTable("Courses");
                 });
 
+            modelBuilder.Entity("SmartLearning.Api.Models.EmailCode", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Attempts")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CodeHash")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsUsed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Purpose")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Email", "Purpose");
+
+                    b.ToTable("EmailCodes");
+                });
+
             modelBuilder.Entity("SmartLearning.Api.Models.Enrollment", b =>
                 {
                     b.Property<int>("Id")
@@ -371,6 +407,9 @@ namespace SmartLearning.Api.Data.Migrations
                     b.Property<string>("Headline")
                         .HasColumnType("text");
 
+                    b.Property<bool>("IsEmailVerified")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -381,6 +420,9 @@ namespace SmartLearning.Api.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Role")
+                        .HasColumnType("text");
+
+                    b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
 
                     b.HasKey("Id");

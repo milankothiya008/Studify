@@ -29,13 +29,20 @@ export function AuthProvider({ children }) {
       });
   }, []);
 
-  async function login(email, password) {
-    const response = await api.post("/auth/login", { email: email, password: password });
-    localStorage.setItem("token", response.data.token);
-    setUser(response.data.user);
-    return response.data.user;
+  // Saves the token + user that the API sends back after logging in.
+  function saveLogin(data) {
+    localStorage.setItem("token", data.token);
+    setUser(data.user);
+    return data.user;
   }
 
+  async function login(email, password) {
+    const response = await api.post("/auth/login", { email: email, password: password });
+    return saveLogin(response.data);
+  }
+
+  // Creates the account. The user is NOT logged in yet: they must type the
+  // code we emailed first (see verifyEmail). Returns { requiresVerification, email, message }.
   async function register(fullName, email, password, role) {
     const response = await api.post("/auth/register", {
       fullName: fullName,
@@ -43,9 +50,26 @@ export function AuthProvider({ children }) {
       password: password,
       role: role,
     });
-    localStorage.setItem("token", response.data.token);
-    setUser(response.data.user);
-    return response.data.user;
+    return response.data;
+  }
+
+  async function verifyEmail(email, code) {
+    const response = await api.post("/auth/verify-email", { email: email, code: code });
+    return saveLogin(response.data);
+  }
+
+  async function resetPassword(email, code, newPassword) {
+    const response = await api.post("/auth/reset-password", {
+      email: email,
+      code: code,
+      newPassword: newPassword,
+    });
+    return saveLogin(response.data);
+  }
+
+  // Used after changing the password: the API sends a fresh token for this device.
+  function saveToken(token) {
+    localStorage.setItem("token", token);
   }
 
   function logout() {
@@ -60,6 +84,9 @@ export function AuthProvider({ children }) {
     loading: loading,
     login: login,
     register: register,
+    verifyEmail: verifyEmail,
+    resetPassword: resetPassword,
+    saveToken: saveToken,
     logout: logout,
     setUser: setUser, // used by the profile page after an update
   };

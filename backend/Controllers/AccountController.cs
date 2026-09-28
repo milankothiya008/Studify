@@ -15,11 +15,13 @@ namespace SmartLearning.Api.Controllers
     {
         private readonly AppDbContext _db;
         private readonly FileStorageService _fileStorage;
+        private readonly TokenService _tokenService;
 
-        public AccountController(AppDbContext db, FileStorageService fileStorage)
+        public AccountController(AppDbContext db, FileStorageService fileStorage, TokenService tokenService)
         {
             _db = db;
             _fileStorage = fileStorage;
+            _tokenService = tokenService;
         }
 
         // PUT api/account/profile
@@ -71,9 +73,11 @@ namespace SmartLearning.Api.Controllers
             }
 
             user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+            TokenService.RenewSecurityStamp(user); // log out every other device
             await _db.SaveChangesAsync();
 
-            return Ok(new { message = "Password changed." });
+            // This device gets a fresh token, so it stays logged in.
+            return Ok(new { message = "Password changed. Other devices have been logged out.", token = _tokenService.CreateToken(user) });
         }
 
         // GET api/account/subscription  -> is my subscription active, and until when?

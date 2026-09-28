@@ -29,19 +29,20 @@ api.interceptors.request.use(function (config) {
   return config;
 });
 
-// After every response: if the token has expired, log the user out.
+// After every response: if the login has expired, log the user out.
+// (A login also expires when the password or role changes.)
 api.interceptors.response.use(
   function (response) {
     return response;
   },
   function (error) {
     const hadToken = localStorage.getItem("token");
-    if (error.response && error.response.status === 401 && hadToken) {
+    // The /auth/... pages (login, verify, reset, me) handle their own errors.
+    const isAuthRequest = error.config && error.config.url.startsWith("/auth/");
+
+    if (error.response && error.response.status === 401 && hadToken && !isAuthRequest) {
       localStorage.removeItem("token");
-      // "/auth/me" is checked when the app starts; AuthContext handles that one itself.
-      if (error.config.url !== "/auth/me") {
-        window.location.href = "/login";
-      }
+      window.location.href = "/login?expired=1";
     }
     return Promise.reject(error);
   }

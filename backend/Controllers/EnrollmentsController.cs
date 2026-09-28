@@ -14,11 +14,13 @@ namespace SmartLearning.Api.Controllers
     {
         private readonly AppDbContext _db;
         private readonly CourseAccessService _accessService;
+        private readonly NotificationService _notificationService;
 
-        public EnrollmentsController(AppDbContext db, CourseAccessService accessService)
+        public EnrollmentsController(AppDbContext db, CourseAccessService accessService, NotificationService notificationService)
         {
             _db = db;
             _accessService = accessService;
+            _notificationService = notificationService;
         }
 
         // POST api/enrollments/5
@@ -67,7 +69,20 @@ namespace SmartLearning.Api.Controllers
                 AccessType = accessType,
                 EnrolledAt = DateTime.UtcNow
             });
-            await _db.SaveChangesAsync();
+
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Two enroll requests arrived at the same moment (double click, two tabs):
+                // the other one already created the enrollment.
+                return Ok(new { message = "You are already enrolled." });
+            }
+
+            // Email: "You're enrolled in ..."
+            await _notificationService.SendEnrollmentEmailAsync(userId, courseId, accessType, null, null);
 
             return Ok(new { message = "You are enrolled. Happy learning!" });
         }
@@ -89,6 +104,7 @@ namespace SmartLearning.Api.Controllers
                     ThumbnailUrl = e.Course.ThumbnailUrl,
                     InstructorName = e.Course.Instructor.FullName,
                     AccessType = e.AccessType,
+                    Price = e.Course.Price,
                     TotalLectures = e.Course.Sections.SelectMany(s => s.Lectures).Count(),
                     CompletedLectures = _db.LectureProgresses.Count(p =>
                         p.UserId == userId && p.IsCompleted && p.Lecture.Section.CourseId == e.CourseId),
@@ -103,7 +119,7 @@ namespace SmartLearning.Api.Controllers
             foreach (MyCourseDto course in courses)
             {
                 course.ProgressPercent = CourseMapper.CalculatePercent(course.CompletedLectures, course.TotalLectures);
-                course.CanWatch = course.AccessType != AccessTypes.Subscription || hasActiveSubscription;
+                course.CanWatch = course.AccessType != AccessTypes.Subscription || hasActiveSubscription || course.Price == 0;
             }
 
             return Ok(courses);

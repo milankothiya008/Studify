@@ -1,38 +1,45 @@
 import { useState } from "react";
+import { AlertCircle, Camera, KeyRound, UserRound } from "lucide-react";
 import api, { getErrorMessage } from "../api";
 import { useAuth } from "../AuthContext";
+import { useToast } from "../ToastContext";
 import Avatar from "../components/Avatar";
+import PageHeader from "../components/PageHeader";
+import PasswordInput from "../components/PasswordInput";
 
 function ProfilePage() {
-  const { user, setUser } = useAuth();
+  const { user, setUser, saveToken } = useAuth();
+  const showToast = useToast();
 
   const [fullName, setFullName] = useState(user.fullName);
   const [headline, setHeadline] = useState(user.headline || "");
   const [bio, setBio] = useState(user.bio || "");
-  const [profileMessage, setProfileMessage] = useState("");
   const [profileError, setProfileError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
 
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
 
   async function handleSaveProfile(event) {
     event.preventDefault();
-    setProfileMessage("");
     setProfileError("");
+    setSavingProfile(true);
     try {
       const response = await api.put("/account/profile", { fullName: fullName, headline: headline, bio: bio });
       setUser(response.data);
-      setProfileMessage("Profile saved.");
+      showToast("Profile saved.");
     } catch (err) {
       setProfileError(getErrorMessage(err));
     }
+    setSavingProfile(false);
   }
 
   async function handlePhotoChange(event) {
     const file = event.target.files[0];
+    event.target.value = ""; // so choosing the same file again works
     if (!file) {
       return;
     }
@@ -46,6 +53,7 @@ function ProfilePage() {
     try {
       const response = await api.post("/account/photo", formData);
       setUser(response.data);
+      showToast("Photo updated.");
     } catch (err) {
       setProfileError(getErrorMessage(err));
     }
@@ -54,90 +62,129 @@ function ProfilePage() {
 
   async function handleChangePassword(event) {
     event.preventDefault();
-    setPasswordMessage("");
     setPasswordError("");
+    setSavingPassword(true);
     try {
       const response = await api.post("/account/change-password", {
         currentPassword: currentPassword,
         newPassword: newPassword,
       });
-      setPasswordMessage(response.data.message);
+      // Other devices are logged out; this one gets a fresh login token.
+      saveToken(response.data.token);
+      showToast(response.data.message);
       setCurrentPassword("");
       setNewPassword("");
     } catch (err) {
       setPasswordError(getErrorMessage(err));
     }
+    setSavingPassword(false);
   }
 
   return (
-    <div className="container page narrow">
-      <h1>Profile</h1>
+    <div>
+      <PageHeader title="Account settings" subtitle="Manage your profile, photo and password." />
 
-      <div className="box">
-        <div className="photo-row">
-          <Avatar name={user.fullName} imageUrl={user.profileImageUrl} size={96} />
-          <div>
-            <label className="btn btn-outline">
-              {uploading ? "Uploading..." : "Change photo"}
-              <input type="file" accept="image/*" hidden onChange={handlePhotoChange} />
+      <div className="container page narrow">
+        {/* ---------- Profile ---------- */}
+        <section className="card card-padded settings-card">
+          <h2 className="card-title">
+            <UserRound size={20} /> Profile
+          </h2>
+
+          <div className="photo-row">
+            <label className="avatar-upload" title="Change photo">
+              <Avatar name={user.fullName} imageUrl={user.profileImageUrl} size={96} />
+              <span className="avatar-upload-overlay">
+                {uploading ? <span className="btn-spinner"></span> : <Camera size={22} />}
+              </span>
+              <input type="file" accept="image/*" hidden onChange={handlePhotoChange} disabled={uploading} />
             </label>
-            <p className="muted small">JPG, PNG or WEBP.</p>
+            <div>
+              <strong>{user.fullName}</strong>
+              <p className="muted small">
+                {user.email} · {user.role}
+              </p>
+              <p className="muted small">Click the photo to change it (JPG, PNG or WEBP).</p>
+            </div>
           </div>
-        </div>
 
-        <form onSubmit={handleSaveProfile}>
-          <label>Full name</label>
-          <input value={fullName} onChange={(e) => setFullName(e.target.value)} required />
-
-          <label>Headline</label>
-          <input
-            value={headline}
-            placeholder="e.g. Web developer and teacher"
-            onChange={(e) => setHeadline(e.target.value)}
-          />
-
-          <label>Biography</label>
-          <textarea rows={5} value={bio} onChange={(e) => setBio(e.target.value)} />
-          {user.role === "Instructor" && (
-            <p className="muted small">Your headline and biography are shown on your course pages.</p>
+          {profileError && (
+            <div className="alert alert-error">
+              <AlertCircle size={18} /> {profileError}
+            </div>
           )}
 
-          {profileError && <div className="alert alert-error">{profileError}</div>}
-          {profileMessage && <div className="alert alert-success">{profileMessage}</div>}
+          <form onSubmit={handleSaveProfile}>
+            <div className="form-field">
+              <label htmlFor="fullName">Full name</label>
+              <input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} maxLength={100} required />
+            </div>
 
-          <button type="submit" className="btn btn-primary">
-            Save
-          </button>
-        </form>
-      </div>
+            <div className="form-field">
+              <label htmlFor="headline">Headline</label>
+              <input
+                id="headline"
+                value={headline}
+                placeholder="e.g. Web developer and teacher"
+                maxLength={150}
+                onChange={(e) => setHeadline(e.target.value)}
+              />
+            </div>
 
-      <div className="box">
-        <h2>Change password</h2>
-        <form onSubmit={handleChangePassword}>
-          <label>Current password</label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            required
-          />
+            <div className="form-field">
+              <label htmlFor="bio">Biography</label>
+              <textarea id="bio" rows={5} value={bio} onChange={(e) => setBio(e.target.value)} />
+              {user.role !== "Student" && (
+                <p className="field-hint">Your headline and biography are shown on your course pages.</p>
+              )}
+            </div>
 
-          <label>New password</label>
-          <input
-            type="password"
-            value={newPassword}
-            minLength={6}
-            onChange={(e) => setNewPassword(e.target.value)}
-            required
-          />
+            <button type="submit" className="btn btn-primary" disabled={savingProfile}>
+              {savingProfile && <span className="btn-spinner"></span>}
+              {savingProfile ? "Saving..." : "Save profile"}
+            </button>
+          </form>
+        </section>
 
-          {passwordError && <div className="alert alert-error">{passwordError}</div>}
-          {passwordMessage && <div className="alert alert-success">{passwordMessage}</div>}
+        {/* ---------- Password ---------- */}
+        <section className="card card-padded settings-card">
+          <h2 className="card-title">
+            <KeyRound size={20} /> Change password
+          </h2>
+          <p className="muted small">Changing your password logs you out on all your other devices.</p>
 
-          <button type="submit" className="btn btn-dark">
-            Change password
-          </button>
-        </form>
+          {passwordError && (
+            <div className="alert alert-error">
+              <AlertCircle size={18} /> {passwordError}
+            </div>
+          )}
+
+          <form onSubmit={handleChangePassword}>
+            <div className="form-field">
+              <label>Current password</label>
+              <PasswordInput
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+
+            <div className="form-field">
+              <label>New password</label>
+              <PasswordInput
+                value={newPassword}
+                minLength={6}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+
+            <button type="submit" className="btn btn-dark" disabled={savingPassword}>
+              {savingPassword && <span className="btn-spinner"></span>}
+              {savingPassword ? "Saving..." : "Change password"}
+            </button>
+          </form>
+        </section>
       </div>
     </div>
   );

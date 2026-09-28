@@ -21,11 +21,13 @@ namespace SmartLearning.Api.Controllers
     {
         private readonly AppDbContext _db;
         private readonly CourseAccessService _accessService;
+        private readonly NotificationService _notificationService;
 
-        public CheckoutController(AppDbContext db, CourseAccessService accessService)
+        public CheckoutController(AppDbContext db, CourseAccessService accessService, NotificationService notificationService)
         {
             _db = db;
             _accessService = accessService;
+            _notificationService = notificationService;
         }
 
         // POST api/checkout/course/5  -> buy one course (lifetime access)
@@ -77,7 +79,19 @@ namespace SmartLearning.Api.Controllers
                 enrollment.AccessType = AccessTypes.Purchased;
             }
 
-            await _db.SaveChangesAsync();
+            try
+            {
+                await _db.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // Two "buy" requests arrived at the same moment. The other one created the
+                // enrollment, and this one is cancelled completely (its payment is not saved).
+                return ErrorMessage(400, "You already own this course.");
+            }
+
+            // Email: "You're enrolled in ..." with the receipt
+            await _notificationService.SendEnrollmentEmailAsync(userId, courseId, AccessTypes.Purchased, payment.Amount, payment.TransactionId);
 
             return Ok(new CheckoutResponse
             {
@@ -98,6 +112,11 @@ namespace SmartLearning.Api.Controllers
             {
                 return ErrorMessage(404, "Plan not found.");
             }
+
+            // A "serializable" transaction: if the same student buys twice at the same moment,
+            // the database lets only one of the two purchases finish. Without it, both would
+            // start from the same end date and the student would pay twice for one extension.
+            using var transaction = await _db.Database.BeginTransactionAsync(System.Data.IsolationLevel.Serializable);
 
             // If a subscription is still running, the new one starts when it ends
             // (so the student never loses days they already paid for).
@@ -121,7 +140,19 @@ namespace SmartLearning.Api.Controllers
             payment.PlanId = plan.Id;
             _db.Payments.Add(payment);
 
-            await _db.SaveChangesAsync();
+            try
+            {
+                await _db.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (Exception)
+            {
+                return ErrorMessage(409, "Another payment was being processed at the same time. "
+                    + "Please check your purchase history before trying again.");
+            }
+
+            // Email: "Your subscription is active" with the receipt
+            await _notificationService.SendSubscriptionEmailAsync(userId, plan.Name, subscription.EndDate, payment.Amount, payment.TransactionId);
 
             return Ok(new CheckoutResponse
             {

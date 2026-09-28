@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { ArrowLeft, Check, Eye, FileText, Image, ListVideo, Rocket, ShieldAlert } from "lucide-react";
 import api, { getErrorMessage } from "../../api";
 import { useAuth } from "../../AuthContext";
 import Spinner from "../../components/Spinner";
+import EmptyState from "../../components/EmptyState";
+import ProgressBar from "../../components/ProgressBar";
 import CourseDetailsForm from "./CourseDetailsForm";
 import CourseMediaForm from "./CourseMediaForm";
 import CurriculumEditor from "./CurriculumEditor";
@@ -40,7 +43,11 @@ function CourseEditorPage() {
   if (error) {
     return (
       <div className="container page">
-        <div className="alert alert-error">{error}</div>
+        <EmptyState icon={ShieldAlert} title={error}>
+          <Link to="/instructor" className="btn btn-primary">
+            Back to dashboard
+          </Link>
+        </EmptyState>
       </div>
     );
   }
@@ -53,7 +60,7 @@ function CourseEditorPage() {
   if (!course.isOwner && user.role !== "Admin") {
     return (
       <div className="container page">
-        <div className="alert alert-error">You can only edit your own courses.</div>
+        <EmptyState icon={ShieldAlert} title="You can only edit your own courses." />
       </div>
     );
   }
@@ -72,17 +79,20 @@ function CourseEditorPage() {
   const curriculumDone = lecturesWithVideo > 0;
 
   const tabs = [
-    { key: "details", label: "Course details", done: detailsDone },
-    { key: "media", label: "Image & promo video", done: mediaDone },
-    { key: "curriculum", label: "Curriculum", done: curriculumDone },
-    { key: "publish", label: "Publish", done: course.isPublished },
+    { key: "details", label: "Course details", icon: FileText, done: detailsDone },
+    { key: "media", label: "Image & promo video", icon: Image, done: mediaDone },
+    { key: "curriculum", label: "Curriculum", icon: ListVideo, done: curriculumDone },
+    { key: "publish", label: "Publish", icon: Rocket, done: course.isPublished },
   ];
+  const doneCount = tabs.filter((tab) => tab.done).length;
 
   return (
     <div>
       <div className="editor-topbar">
         <div className="container editor-topbar-inner">
-          <Link to="/instructor">‹ Back to courses</Link>
+          <Link to="/instructor" className="back-link back-link-light">
+            <ArrowLeft size={18} /> Back
+          </Link>
           <strong className="editor-title">{course.title}</strong>
           {course.isPublished ? (
             <span className="badge badge-success">Published</span>
@@ -90,28 +100,37 @@ function CourseEditorPage() {
             <span className="badge badge-warning">Draft</span>
           )}
           <Link to={"/course/" + course.id} className="btn btn-outline-light btn-small">
-            Preview
+            <Eye size={16} /> Preview
           </Link>
         </div>
       </div>
 
       <div className="container editor-layout">
-        <nav className="editor-steps">
+        <nav className="editor-steps card">
+          <div className="editor-steps-progress">
+            <small>
+              {doneCount} of {tabs.length} steps done
+            </small>
+            <ProgressBar percent={(doneCount * 100) / tabs.length} />
+          </div>
           {tabs.map(function (tab) {
+            const Icon = tab.icon;
             return (
               <button
                 key={tab.key}
                 className={activeTab === tab.key ? "editor-step active" : "editor-step"}
                 onClick={() => setActiveTab(tab.key)}
               >
-                <span className={tab.done ? "step-check done" : "step-check"}>{tab.done ? "✓" : ""}</span>
+                <span className={tab.done ? "step-check done" : "step-check"}>
+                  {tab.done ? <Check size={14} /> : <Icon size={14} />}
+                </span>
                 {tab.label}
               </button>
             );
           })}
         </nav>
 
-        <section className="editor-content">
+        <section className="editor-content card" key={activeTab}>
           {activeTab === "details" && (
             <CourseDetailsForm course={course} categories={categories} onSaved={loadCourse} />
           )}

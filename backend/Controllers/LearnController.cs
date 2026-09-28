@@ -58,6 +58,14 @@ namespace SmartLearning.Api.Controllers
             int totalLectures = sections.Sum(s => s.Lectures.Count);
             int completedLectures = sections.Sum(s => s.Lectures.Count(l => l.IsCompleted));
 
+            // Every lecture is done (for example because the instructor deleted the last
+            // unfinished one): mark the course as completed.
+            if (enrollment != null && enrollment.CompletedAt == null && totalLectures > 0 && completedLectures == totalLectures)
+            {
+                enrollment.CompletedAt = DateTime.UtcNow;
+                await _db.SaveChangesAsync();
+            }
+
             PlayerDto player = new PlayerDto
             {
                 CourseId = course.Id,

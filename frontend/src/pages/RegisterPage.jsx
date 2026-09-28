@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { AlertCircle, Backpack, Presentation } from "lucide-react";
 import { useAuth } from "../AuthContext";
 import { getErrorMessage } from "../api";
+import AuthLayout from "../components/AuthLayout";
+import PasswordInput from "../components/PasswordInput";
 
 function RegisterPage() {
   const { register } = useAuth();
@@ -21,12 +24,9 @@ function RegisterPage() {
     setError("");
     setWorking(true);
     try {
-      const newUser = await register(fullName, email, password, role);
-      if (newUser.role === "Instructor") {
-        navigate("/instructor");
-      } else {
-        navigate("/courses");
-      }
+      const result = await register(fullName, email, password, role);
+      // Next step: type the 6-digit code we emailed.
+      navigate("/verify-email?email=" + encodeURIComponent(result.email), { state: { message: result.message } });
     } catch (err) {
       setError(getErrorMessage(err));
       setWorking(false);
@@ -34,57 +34,84 @@ function RegisterPage() {
   }
 
   return (
-    <div className="auth-page">
-      <form className="auth-card" onSubmit={handleSubmit}>
-        <h1>Sign up and start learning</h1>
+    <AuthLayout title="Create your account" subtitle="Join for free. It takes less than a minute.">
+      {error && (
+        <div className="alert alert-error">
+          <AlertCircle size={18} /> {error}
+        </div>
+      )}
 
-        {error && <div className="alert alert-error">{error}</div>}
-
-        <label>I want to</label>
-        <div className="role-picker">
-          <button
-            type="button"
-            className={role === "Student" ? "role-option selected" : "role-option"}
-            onClick={() => setRole("Student")}
-          >
-            🎒 Learn
-            <small>Student</small>
-          </button>
-          <button
-            type="button"
-            className={role === "Instructor" ? "role-option selected" : "role-option"}
-            onClick={() => setRole("Instructor")}
-          >
-            🧑‍🏫 Teach
-            <small>Instructor</small>
-          </button>
+      <form onSubmit={handleSubmit}>
+        <div className="form-field">
+          <label>I want to</label>
+          <div className="role-picker">
+            <button
+              type="button"
+              className={role === "Student" ? "role-option selected" : "role-option"}
+              onClick={() => setRole("Student")}
+            >
+              <Backpack size={24} />
+              <strong>Learn</strong>
+              <small>as a student</small>
+            </button>
+            <button
+              type="button"
+              className={role === "Instructor" ? "role-option selected" : "role-option"}
+              onClick={() => setRole("Instructor")}
+            >
+              <Presentation size={24} />
+              <strong>Teach</strong>
+              <small>as an instructor</small>
+            </button>
+          </div>
         </div>
 
-        <label>Full name</label>
-        <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
+        <div className="form-field">
+          <label htmlFor="fullName">Full name</label>
+          <input
+            id="fullName"
+            type="text"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            autoComplete="name"
+            required
+          />
+        </div>
 
-        <label>Email</label>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <div className="form-field">
+          <label htmlFor="email">Email</label>
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            autoComplete="email"
+            required
+          />
+          <p className="field-hint">We'll send a 6-digit code to verify it.</p>
+        </div>
 
-        <label>Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          minLength={6}
-          required
-        />
-        <p className="muted small">At least 6 characters.</p>
+        <div className="form-field">
+          <label>Password</label>
+          <PasswordInput
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            minLength={6}
+            autoComplete="new-password"
+          />
+          <p className="field-hint">At least 6 characters.</p>
+        </div>
 
-        <button type="submit" className="btn btn-primary btn-block" disabled={working}>
-          {working ? "Creating account..." : "Sign up"}
+        <button type="submit" className="btn btn-primary btn-block btn-large" disabled={working}>
+          {working && <span className="btn-spinner"></span>}
+          {working ? "Creating account..." : "Create account"}
         </button>
-
-        <p className="center">
-          Already have an account? <Link to="/login">Log in</Link>
-        </p>
       </form>
-    </div>
+
+      <p className="auth-switch">
+        Already have an account? <Link to="/login">Log in</Link>
+      </p>
+    </AuthLayout>
   );
 }
 

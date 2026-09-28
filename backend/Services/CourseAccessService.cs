@@ -65,7 +65,9 @@ namespace SmartLearning.Api.Services
                 return false;
             }
 
-            if (enrollment.AccessType == AccessTypes.Subscription)
+            // A subscription enrollment needs an active subscription,
+            // unless the instructor has made the course free in the meantime.
+            if (enrollment.AccessType == AccessTypes.Subscription && course.Price > 0)
             {
                 return await HasActiveSubscriptionAsync(userId);
             }

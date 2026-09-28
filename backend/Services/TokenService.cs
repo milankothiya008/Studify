@@ -10,6 +10,15 @@ namespace SmartLearning.Api.Services
     // in the header:  Authorization: Bearer <token>
     public class TokenService
     {
+        // Name of the claim that holds the user's SecurityStamp.
+        public const string StampClaim = "stamp";
+
+        // Call this when the role or password changes: every older login token stops working.
+        public static void RenewSecurityStamp(User user)
+        {
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
+        }
+
         private readonly IConfiguration _configuration;
 
         public TokenService(IConfiguration configuration)
@@ -25,7 +34,8 @@ namespace SmartLearning.Api.Services
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
                 new Claim(ClaimTypes.Name, user.FullName),
                 new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
+                new Claim(ClaimTypes.Role, user.Role),
+                new Claim(StampClaim, user.SecurityStamp ?? "")
             };
 
             string secretKey = _configuration["Jwt:Key"];

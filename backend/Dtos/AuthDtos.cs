@@ -60,6 +60,48 @@ namespace SmartLearning.Api.Dtos
         public string Bio { get; set; }
     }
 
+    // Sent back after sign up: the account exists, but the email must be verified first.
+    public class RegisterResponse
+    {
+        public bool RequiresVerification { get; set; }
+        public string Email { get; set; }
+        public string Message { get; set; }
+    }
+
+    public class VerifyEmailRequest
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "The code has 6 digits.")]
+        public string Code { get; set; }
+    }
+
+    // Used by "resend code" and by "forgot password".
+    public class EmailOnlyRequest
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+    }
+
+    public class ResetPasswordRequest
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; }
+
+        [Required]
+        [StringLength(6, MinimumLength = 6, ErrorMessage = "The code has 6 digits.")]
+        public string Code { get; set; }
+
+        [Required]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+        public string NewPassword { get; set; }
+    }
+
     public class ChangePasswordRequest
     {
         [Required]

@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { CalendarClock, Check, Lock, RefreshCw, Sparkles, Unlock } from "lucide-react";
 import api from "../api";
 import { useAuth } from "../AuthContext";
-import Spinner from "../components/Spinner";
+import PageHeader from "../components/PageHeader";
+import { SkeletonBlock } from "../components/Skeleton";
 import { formatDate, formatPrice } from "../utils";
+
+const FEATURES = ["Access to every course", "New courses included", "Progress tracking", "Certificates of completion"];
 
 // Subscription plans: one payment unlocks every course for some days.
 function PlansPage() {
@@ -42,10 +46,6 @@ function PlansPage() {
     navigate("/checkout/plan/" + planId);
   }
 
-  if (loading) {
-    return <Spinner />;
-  }
-
   // The most expensive plan is usually the best value per day.
   let bestPlanId = null;
   if (plans.length > 1) {
@@ -53,54 +53,107 @@ function PlansPage() {
   }
 
   return (
-    <div className="container page">
-      <div className="center">
-        <h1>Personal Plan</h1>
-        <p className="lead">One subscription. Every course. Learn as much as you want while your plan is active.</p>
-      </div>
+    <div>
+      <PageHeader
+        center
+        title="One subscription. Every course."
+        subtitle="Learn as much as you want while your plan is active. Cancel anytime: it simply ends."
+      />
 
-      {subscription && subscription.isActive && (
-        <div className="alert alert-success center">
-          ✓ Your <strong>{subscription.planName}</strong> subscription is active until{" "}
-          <strong>{formatDate(subscription.endDate)}</strong> ({subscription.daysLeft} days left). Buying another plan
-          adds the days to the end of your current one.
-        </div>
-      )}
-
-      {subscription && !subscription.isActive && (
-        <div className="alert alert-warning center">You don't have an active subscription.</div>
-      )}
-
-      <div className="plan-grid">
-        {plans.map(function (plan) {
-          const perDay = plan.price / plan.durationDays;
-          return (
-            <div key={plan.id} className={plan.id === bestPlanId ? "plan-card best" : "plan-card"}>
-              {plan.id === bestPlanId && <div className="plan-ribbon">Best value</div>}
-              <h2>{plan.name}</h2>
-              <p className="muted">{plan.description}</p>
-              <div className="plan-price">{formatPrice(plan.price)}</div>
-              <p className="muted small">
-                for {plan.durationDays} days · about {formatPrice(Math.ceil(perDay))} per day
+      <div className="container page">
+        {subscription && subscription.isActive && (
+          <div className="status-card status-active">
+            <Unlock size={22} />
+            <div>
+              <strong>Your {subscription.planName} subscription is active</strong>
+              <p>
+                Valid until {formatDate(subscription.endDate)} ({subscription.daysLeft} days left). Buying another plan
+                adds its days to the end of your current one.
               </p>
-              <ul className="check-list">
-                <li>Access to every course</li>
-                <li>New courses included</li>
-                <li>Track your progress</li>
-                <li>Certificates of completion</li>
-              </ul>
-              <button className="btn btn-primary btn-block" onClick={() => choosePlan(plan.id)}>
-                {subscription && subscription.isActive ? "Extend with " + plan.name : "Subscribe"}
-              </button>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        )}
 
-      <p className="center muted small">
-        When a subscription ends, courses you joined through it are locked until you renew. Courses you bought one by one
-        are yours forever.
-      </p>
+        {subscription && !subscription.isActive && (
+          <div className="status-card">
+            <Lock size={22} />
+            <div>
+              <strong>You don't have an active subscription</strong>
+              <p>Choose a plan below to unlock every course.</p>
+            </div>
+          </div>
+        )}
+
+        <div className="plan-grid">
+          {loading && (
+            <>
+              <SkeletonBlock height={420} />
+              <SkeletonBlock height={420} />
+              <SkeletonBlock height={420} />
+            </>
+          )}
+
+          {plans.map(function (plan, index) {
+            const perDay = plan.price / plan.durationDays;
+            const isBest = plan.id === bestPlanId;
+            return (
+              <div key={plan.id} className={isBest ? "plan-card best stagger-item" : "plan-card stagger-item"} style={{ "--i": index }}>
+                {isBest && (
+                  <div className="plan-ribbon">
+                    <Sparkles size={14} /> Best value
+                  </div>
+                )}
+                <h2>{plan.name}</h2>
+                <p className="muted">{plan.description}</p>
+                <div className="plan-price">
+                  {formatPrice(plan.price)}
+                  <span>/ {plan.durationDays} days</span>
+                </div>
+                <p className="plan-per-day">About {formatPrice(Math.ceil(perDay))} per day</p>
+                <ul className="check-list">
+                  {FEATURES.map(function (feature) {
+                    return (
+                      <li key={feature}>
+                        <Check size={18} /> {feature}
+                      </li>
+                    );
+                  })}
+                </ul>
+                <button
+                  className={isBest ? "btn btn-primary btn-block btn-large" : "btn btn-outline btn-block btn-large"}
+                  onClick={() => choosePlan(plan.id)}
+                >
+                  {subscription && subscription.isActive ? "Extend with " + plan.name : "Get " + plan.name}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <div className="info-grid">
+          <div className="info-item">
+            <Unlock size={22} />
+            <div>
+              <strong>Everything unlocked</strong>
+              <p>Enroll in any course while your plan is active.</p>
+            </div>
+          </div>
+          <div className="info-item">
+            <CalendarClock size={22} />
+            <div>
+              <strong>When it ends</strong>
+              <p>Courses joined through the plan lock until you renew. Your progress is kept.</p>
+            </div>
+          </div>
+          <div className="info-item">
+            <RefreshCw size={22} />
+            <div>
+              <strong>Bought courses stay</strong>
+              <p>Courses you bought one by one are yours forever.</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

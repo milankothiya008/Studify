@@ -61,27 +61,28 @@ namespace SmartLearning.Api.Controllers
                 query = query.Where(c => c.Price > 0);
             }
 
-            // Sorting
+            // Sorting. ThenByDescending(Id) keeps courses with equal values in a fixed order,
+            // so no course appears twice (or goes missing) when moving between pages.
             if (sort == "newest")
             {
-                query = query.OrderByDescending(c => c.CreatedAt);
+                query = query.OrderByDescending(c => c.CreatedAt).ThenByDescending(c => c.Id);
             }
             else if (sort == "rating")
             {
-                query = query.OrderByDescending(c => c.Reviews.Count > 0 ? c.Reviews.Average(r => r.Rating) : 0);
+                query = query.OrderByDescending(c => c.Reviews.Count > 0 ? c.Reviews.Average(r => r.Rating) : 0).ThenByDescending(c => c.Id);
             }
             else if (sort == "price-low")
             {
-                query = query.OrderBy(c => c.Price);
+                query = query.OrderBy(c => c.Price).ThenByDescending(c => c.Id);
             }
             else if (sort == "price-high")
             {
-                query = query.OrderByDescending(c => c.Price);
+                query = query.OrderByDescending(c => c.Price).ThenByDescending(c => c.Id);
             }
             else
             {
                 // "popular" = most students first
-                query = query.OrderByDescending(c => c.Enrollments.Count);
+                query = query.OrderByDescending(c => c.Enrollments.Count).ThenByDescending(c => c.Id);
             }
 
             int totalCount = await query.CountAsync();

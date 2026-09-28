@@ -1,10 +1,17 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using SmartLearning.Api.Data;
+using SmartLearning.Api.Models;
 using SmartLearning.Api.Services;
+
+// The wwwroot/uploads folder is used when Cloudinary is not configured. On a fresh server
+// (for example a Docker container) it may not exist yet, so create it before starting.
+Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads"));
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +33,14 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<FileStorageService>();
 builder.Services.AddScoped<CourseAccessService>();
+builder.Services.AddScoped<OtpService>();
+builder.Services.AddScoped<NotificationService>();
+
+// EmailService gets its own HttpClient to call the Brevo email API.
+builder.Services.AddHttpClient<EmailService>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 
 builder.Services.AddControllers();
 
@@ -44,6 +59,26 @@ builder.Services
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+
+        // After the token itself is checked, make sure it is still up to date:
+        // the user must still exist, and their SecurityStamp must be the same as in the token.
+        // (It changes when an admin changes the role, or when the password is changed.)
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                int userId = int.Parse(context.Principal.FindFirstValue(ClaimTypes.NameIdentifier));
+                string tokenStamp = context.Principal.FindFirstValue(TokenService.StampClaim) ?? "";
+
+                AppDbContext db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+                User user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+
+                if (user == null || (user.SecurityStamp ?? "") != tokenStamp)
+                {
+                    context.Fail("This login has expired. Please log in again.");
+                }
+            }
         };
     });
 builder.Services.AddAuthorization();
@@ -72,6 +107,16 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
+});
+
+// ---------------- Running behind a proxy (Railway, Render ...) ----------------
+// The hosting site receives the https request and passes it to this app as http.
+// These headers tell the app the original address, so links it builds start with https.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
 });
 
 // ---------------- Big uploads (videos) ----------------
@@ -105,6 +150,13 @@ if (!app.Environment.IsDevelopment())
             + "and are LOST on every redeploy. Set the Cloudinary__CloudName, Cloudinary__ApiKey and "
             + "Cloudinary__ApiSecret environment variables.");
     }
+
+    string brevoKey = app.Configuration["Email:BrevoApiKey"];
+    if (string.IsNullOrWhiteSpace(brevoKey) || brevoKey.StartsWith("YOUR_"))
+    {
+        app.Logger.LogWarning("Brevo is not configured, so NO emails are sent (codes appear in this log instead). "
+            + "Set the Email__BrevoApiKey and Email__SenderEmail environment variables.");
+    }
 }
 
 // ---------------- Create / update the database, then add demo data ----------------
@@ -127,6 +179,7 @@ using (IServiceScope scope = app.Services.CreateScope())
 }
 
 // ---------------- Request pipeline ----------------
+app.UseForwardedHeaders();
 app.UseStaticFiles();        // serves wwwroot/uploads (used when Cloudinary is not configured)
 app.UseCors("ReactApp");
 app.UseAuthentication();

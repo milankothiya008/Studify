@@ -30,6 +30,7 @@ namespace SmartLearning.Api.Data
                 Email = "admin@smartlearn.dev",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
                 Role = Roles.Admin,
+                IsEmailVerified = true,
                 CreatedAt = now
             };
 
@@ -39,6 +40,7 @@ namespace SmartLearning.Api.Data
                 Email = "instructor@smartlearn.dev",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
                 Role = Roles.Instructor,
+                IsEmailVerified = true,
                 Headline = "Senior Software Engineer and Teacher",
                 Bio = "I have been building software for 15 years and love teaching beginners.",
                 CreatedAt = now
@@ -50,6 +52,7 @@ namespace SmartLearning.Api.Data
                 Email = "student@smartlearn.dev",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
                 Role = Roles.Student,
+                IsEmailVerified = true,
                 CreatedAt = now
             };
 

@@ -8,6 +8,7 @@ namespace SmartLearning.Api.Dtos
         public string ThumbnailUrl { get; set; }
         public string InstructorName { get; set; }
         public string AccessType { get; set; }
+        public decimal Price { get; set; }
         public int TotalLectures { get; set; }
         public int CompletedLectures { get; set; }
         public int ProgressPercent { get; set; }
@@ -39,6 +40,7 @@ namespace SmartLearning.Api.Dtos
     public class ProgressRequest
     {
         // Current position in the video, in seconds.
+        [System.ComponentModel.DataAnnotations.Range(0, 86400)]
         public int WatchedSeconds { get; set; }
     }
 

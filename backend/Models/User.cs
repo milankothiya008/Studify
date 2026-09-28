@@ -12,6 +12,14 @@ namespace SmartLearning.Api.Models
         // "Student", "Instructor" or "Admin" (see Roles.cs)
         public string Role { get; set; }
 
+        // False until the user types the 6-digit code we emailed at sign up.
+        // Users who are not verified cannot log in.
+        public bool IsEmailVerified { get; set; }
+
+        // A random value that is copied into every login token. It changes when the role or
+        // the password changes, and then all older tokens stop working (see Program.cs).
+        public string SecurityStamp { get; set; }
+
         // Shown in the instructor part of a course page, e.g. "Senior .NET Developer"
         public string Headline { get; set; }
         public string Bio { get; set; }

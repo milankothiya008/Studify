@@ -69,6 +69,11 @@ namespace SmartLearning.Api.Controllers
         [HttpPost("courses")]
         public async Task<ActionResult> CreateCourse(CourseSaveRequest request)
         {
+            if (!await CategoryExistsAsync(request.CategoryId))
+            {
+                return ErrorMessage(400, "This category does not exist anymore. Please choose another one.");
+            }
+
             Course course = new Course
             {
                 InstructorId = GetUserId(),
@@ -91,6 +96,11 @@ namespace SmartLearning.Api.Controllers
             if (course == null)
             {
                 return ErrorMessage(404, "Course not found.");
+            }
+
+            if (!await CategoryExistsAsync(request.CategoryId))
+            {
+                return ErrorMessage(400, "This category does not exist anymore. Please choose another one.");
             }
 
             CopyRequestToCourse(request, course);
@@ -257,6 +267,16 @@ namespace SmartLearning.Api.Controllers
                 return null;
             }
             return course;
+        }
+
+        // No category (null) is allowed; an id that is not in the database is not.
+        private async Task<bool> CategoryExistsAsync(int? categoryId)
+        {
+            if (categoryId == null)
+            {
+                return true;
+            }
+            return await _db.Categories.AnyAsync(c => c.Id == categoryId);
         }
 
         private bool IsMine(Course course)

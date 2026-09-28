@@ -205,7 +205,7 @@ namespace SmartLearning.Api.Controllers
 
                 lecture.VideoUrl = uploaded.Url;
                 lecture.VideoPublicId = uploaded.PublicId;
-                lecture.DurationSeconds = uploaded.DurationSeconds > 0 ? uploaded.DurationSeconds : durationSeconds;
+                lecture.DurationSeconds = uploaded.DurationSeconds > 0 ? uploaded.DurationSeconds : Math.Max(0, durationSeconds);
                 await _db.SaveChangesAsync();
 
                 return Ok(new { url = uploaded.Url, durationSeconds = lecture.DurationSeconds });

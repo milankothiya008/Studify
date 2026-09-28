@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { AlertCircle, ArrowDown, ArrowUp, Eye, EyeOff, Pencil, PlayCircle, Trash2, Upload } from "lucide-react";
 import api, { getErrorMessage } from "../../api";
+import { useToast } from "../../ToastContext";
 import ProgressBar from "../../components/ProgressBar";
-import { formatClock, getVideoDuration } from "../../utils";
+import { formatClock, getUploadPercent, getVideoDuration } from "../../utils";
 
 // One lecture in the curriculum editor: edit, move, delete and upload its video.
 function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
+  const showToast = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(lecture.title);
   const [description, setDescription] = useState(lecture.description || "");
@@ -23,15 +26,28 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
         isFreePreview: isFreePreview,
       });
       setIsEditing(false);
+      showToast("Lecture saved.");
       onChanged();
     } catch (err) {
       setError(getErrorMessage(err));
     }
   }
 
+  function cancelEdit() {
+    // Put back the saved values.
+    setTitle(lecture.title);
+    setDescription(lecture.description || "");
+    setIsFreePreview(lecture.isFreePreview);
+    setIsEditing(false);
+  }
+
   async function handleMove(direction) {
-    await api.post("/instructor/lectures/" + lecture.id + "/move?direction=" + direction);
-    onChanged();
+    try {
+      await api.post("/instructor/lectures/" + lecture.id + "/move?direction=" + direction);
+      onChanged();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
   }
 
   async function handleDelete() {
@@ -40,6 +56,7 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
     }
     try {
       await api.delete("/instructor/lectures/" + lecture.id);
+      showToast("Lecture deleted.");
       onChanged();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -48,6 +65,7 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
 
   async function handleVideoChange(event) {
     const file = event.target.files[0];
+    event.target.value = ""; // so choosing the same file again works
     if (!file) {
       return;
     }
@@ -65,9 +83,10 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
     try {
       await api.post("/instructor/lectures/" + lecture.id + "/video", formData, {
         onUploadProgress: function (progressEvent) {
-          setUploadProgress(Math.round((progressEvent.loaded * 100) / progressEvent.total));
+          setUploadProgress(getUploadPercent(progressEvent));
         },
       });
+      showToast("Video uploaded.");
       onChanged();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -78,24 +97,32 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
   if (isEditing) {
     return (
       <form className="lecture-editor editing" onSubmit={handleSave}>
-        <label>Lecture title</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} required />
+        <div className="form-field">
+          <label>Lecture title</label>
+          <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} autoFocus required />
+        </div>
 
-        <label>Description (optional)</label>
-        <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+        <div className="form-field">
+          <label>Description (optional)</label>
+          <textarea rows={3} value={description} onChange={(e) => setDescription(e.target.value)} />
+        </div>
 
         <label className="checkbox-label">
           <input type="checkbox" checked={isFreePreview} onChange={(e) => setIsFreePreview(e.target.checked)} />
           Free preview (anyone can watch this lecture)
         </label>
 
-        {error && <div className="alert alert-error">{error}</div>}
+        {error && (
+          <div className="alert alert-error">
+            <AlertCircle size={18} /> {error}
+          </div>
+        )}
 
         <div className="card-actions">
           <button type="submit" className="btn btn-primary btn-small">
             Save lecture
           </button>
-          <button type="button" className="btn btn-outline btn-small" onClick={() => setIsEditing(false)}>
+          <button type="button" className="btn btn-ghost btn-small" onClick={cancelEdit}>
             Cancel
           </button>
         </div>
@@ -107,10 +134,11 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
     <div className="lecture-editor">
       <div className="lecture-editor-row">
         <div className="lecture-editor-title">
+          <PlayCircle size={18} className="muted" />
           <span>
-            ▶ Lecture {number}: {lecture.title}
+            <span className="muted">Lecture {number}:</span> {lecture.title}
           </span>
-          {lecture.isFreePreview && <span className="badge">Free preview</span>}
+          {lecture.isFreePreview && <span className="badge badge-brand">Free preview</span>}
           {lecture.hasVideo ? (
             <span className="badge badge-success">Video · {formatClock(lecture.durationSeconds)}</span>
           ) : (
@@ -120,21 +148,25 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
 
         <div className="icon-buttons">
           <button title="Move up" disabled={isFirst} onClick={() => handleMove("up")}>
-            ↑
+            <ArrowUp size={16} />
           </button>
           <button title="Move down" disabled={isLast} onClick={() => handleMove("down")}>
-            ↓
+            <ArrowDown size={16} />
           </button>
           <button title="Edit" onClick={() => setIsEditing(true)}>
-            ✎
+            <Pencil size={16} />
           </button>
-          <button title="Delete" onClick={handleDelete}>
-            🗑
+          <button title="Delete" className="danger" onClick={handleDelete}>
+            <Trash2 size={16} />
           </button>
         </div>
       </div>
 
-      {error && <div className="alert alert-error">{error}</div>}
+      {error && (
+        <div className="alert alert-error">
+          <AlertCircle size={18} /> {error}
+        </div>
+      )}
 
       {uploadProgress !== null ? (
         <div className="upload-status">
@@ -146,18 +178,20 @@ function LectureEditor({ lecture, number, isFirst, isLast, onChanged }) {
       ) : (
         <div className="lecture-editor-actions">
           <label className="btn btn-outline btn-small">
-            {lecture.hasVideo ? "Replace video" : "Upload video"}
+            <Upload size={15} /> {lecture.hasVideo ? "Replace video" : "Upload video"}
             <input type="file" accept="video/*" hidden onChange={handleVideoChange} />
           </label>
           {lecture.videoUrl && (
             <button className="link-button" onClick={() => setShowVideo(!showVideo)}>
-              {showVideo ? "Hide video" : "Watch video"}
+              {showVideo ? <EyeOff size={15} /> : <Eye size={15} />} {showVideo ? "Hide video" : "Watch video"}
             </button>
           )}
         </div>
       )}
 
-      {showVideo && lecture.videoUrl && <video className="lecture-editor-video" src={lecture.videoUrl} controls />}
+      {showVideo && lecture.videoUrl && (
+        <video className="lecture-editor-video" src={lecture.videoUrl} controls preload="metadata" />
+      )}
     </div>
   );
 }

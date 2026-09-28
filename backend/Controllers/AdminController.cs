@@ -57,6 +57,7 @@ namespace SmartLearning.Api.Controllers
                     FullName = u.FullName,
                     Email = u.Email,
                     Role = u.Role,
+                    IsEmailVerified = u.IsEmailVerified,
                     CreatedAt = u.CreatedAt
                 })
                 .ToListAsync();
@@ -85,6 +86,7 @@ namespace SmartLearning.Api.Controllers
             }
 
             user.Role = request.Role;
+            TokenService.RenewSecurityStamp(user); // the user must log in again to get the new role
             await _db.SaveChangesAsync();
 
             return Ok(new { message = "Role changed. The user must log in again to see the change." });

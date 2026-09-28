@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { AlertCircle } from "lucide-react";
 import api, { getErrorMessage } from "../../api";
+import { useToast } from "../../ToastContext";
 
 const LEVELS = ["Beginner", "Intermediate", "Advanced", "All Levels"];
 
 // The "Course details" tab: title, description, price and so on.
 function CourseDetailsForm({ course, categories, onSaved }) {
+  const showToast = useToast();
   const [title, setTitle] = useState(course.title || "");
   const [subtitle, setSubtitle] = useState(course.subtitle || "");
   const [description, setDescription] = useState(course.description || "");
@@ -14,13 +17,11 @@ function CourseDetailsForm({ course, categories, onSaved }) {
   const [level, setLevel] = useState(course.level || "All Levels");
   const [language, setLanguage] = useState(course.language || "English");
   const [price, setPrice] = useState(course.price);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   async function handleSubmit(event) {
     event.preventDefault();
-    setMessage("");
     setError("");
     setSaving(true);
     try {
@@ -35,7 +36,7 @@ function CourseDetailsForm({ course, categories, onSaved }) {
         language: language,
         price: Number(price),
       });
-      setMessage("Saved!");
+      showToast("Course details saved.");
       onSaved();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -48,41 +49,58 @@ function CourseDetailsForm({ course, categories, onSaved }) {
       <h2>Course details</h2>
       <p className="muted">This is what students see on your course page.</p>
 
-      <label>Course title</label>
-      <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
+      <div className="form-field">
+        <label htmlFor="title">Course title</label>
+        <input id="title" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200} required />
+        <p className="field-hint">{title.length} / 200</p>
+      </div>
 
-      <label>Subtitle</label>
-      <input
-        value={subtitle}
-        placeholder="One sentence about what students get"
-        onChange={(e) => setSubtitle(e.target.value)}
-        maxLength={300}
-      />
+      <div className="form-field">
+        <label htmlFor="subtitle">Subtitle</label>
+        <input
+          id="subtitle"
+          value={subtitle}
+          placeholder="One sentence about what students get"
+          onChange={(e) => setSubtitle(e.target.value)}
+          maxLength={300}
+        />
+      </div>
 
-      <label>Description</label>
-      <textarea rows={6} value={description} onChange={(e) => setDescription(e.target.value)} />
-
-      <label>What will students learn? (one per line)</label>
-      <textarea
-        rows={4}
-        value={whatYouWillLearn}
-        placeholder={"Build a website\nUse React hooks"}
-        onChange={(e) => setWhatYouWillLearn(e.target.value)}
-      />
-
-      <label>Requirements (one per line)</label>
-      <textarea
-        rows={3}
-        value={requirements}
-        placeholder={"A computer with internet\nNo experience needed"}
-        onChange={(e) => setRequirements(e.target.value)}
-      />
+      <div className="form-field">
+        <label htmlFor="description">Description</label>
+        <textarea id="description" rows={6} value={description} onChange={(e) => setDescription(e.target.value)} />
+      </div>
 
       <div className="form-row">
-        <div>
-          <label>Category</label>
-          <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-            <option value="">-- Choose a category --</option>
+        <div className="form-field">
+          <label htmlFor="learn">What will students learn?</label>
+          <textarea
+            id="learn"
+            rows={5}
+            value={whatYouWillLearn}
+            placeholder={"Build a website\nUse React hooks"}
+            onChange={(e) => setWhatYouWillLearn(e.target.value)}
+          />
+          <p className="field-hint">One item per line.</p>
+        </div>
+        <div className="form-field">
+          <label htmlFor="requirements">Requirements</label>
+          <textarea
+            id="requirements"
+            rows={5}
+            value={requirements}
+            placeholder={"A computer with internet\nNo experience needed"}
+            onChange={(e) => setRequirements(e.target.value)}
+          />
+          <p className="field-hint">One item per line.</p>
+        </div>
+      </div>
+
+      <div className="form-row form-row-4">
+        <div className="form-field">
+          <label htmlFor="category">Category</label>
+          <select id="category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+            <option value="">Choose a category</option>
             {categories.map(function (category) {
               return (
                 <option key={category.id} value={category.id}>
@@ -92,9 +110,9 @@ function CourseDetailsForm({ course, categories, onSaved }) {
             })}
           </select>
         </div>
-        <div>
-          <label>Level</label>
-          <select value={level} onChange={(e) => setLevel(e.target.value)}>
+        <div className="form-field">
+          <label htmlFor="level">Level</label>
+          <select id="level" value={level} onChange={(e) => setLevel(e.target.value)}>
             {LEVELS.map(function (item) {
               return (
                 <option key={item} value={item}>
@@ -104,25 +122,37 @@ function CourseDetailsForm({ course, categories, onSaved }) {
             })}
           </select>
         </div>
+        <div className="form-field">
+          <label htmlFor="language">Language</label>
+          <input id="language" value={language} onChange={(e) => setLanguage(e.target.value)} />
+        </div>
+        <div className="form-field">
+          <label htmlFor="price">Price (₹)</label>
+          <input
+            id="price"
+            type="number"
+            min="0"
+            step="1"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required
+          />
+          <p className="field-hint">0 = free course</p>
+        </div>
       </div>
 
-      <div className="form-row">
-        <div>
-          <label>Language</label>
-          <input value={language} onChange={(e) => setLanguage(e.target.value)} />
+      {error && (
+        <div className="alert alert-error">
+          <AlertCircle size={18} /> {error}
         </div>
-        <div>
-          <label>Price (₹) - use 0 for a free course</label>
-          <input type="number" min="0" step="1" value={price} onChange={(e) => setPrice(e.target.value)} required />
-        </div>
+      )}
+
+      <div className="form-actions">
+        <button type="submit" className="btn btn-primary" disabled={saving}>
+          {saving && <span className="btn-spinner"></span>}
+          {saving ? "Saving..." : "Save details"}
+        </button>
       </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
-      {message && <div className="alert alert-success">{message}</div>}
-
-      <button type="submit" className="btn btn-primary" disabled={saving}>
-        {saving ? "Saving..." : "Save"}
-      </button>
     </form>
   );
 }
