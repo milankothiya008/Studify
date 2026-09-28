@@ -59,18 +59,21 @@ function LoginPage() {
           Don't have an account? <Link to="/register">Sign up</Link>
         </p>
 
-        <div className="demo-accounts">
-          <p className="muted small">Demo accounts (password: Password@123)</p>
-          <button type="button" className="chip" onClick={() => fillDemoAccount("student@smartlearn.dev")}>
-            Student
-          </button>
-          <button type="button" className="chip" onClick={() => fillDemoAccount("instructor@smartlearn.dev")}>
-            Instructor
-          </button>
-          <button type="button" className="chip" onClick={() => fillDemoAccount("admin@smartlearn.dev")}>
-            Admin
-          </button>
-        </div>
+        {/* Demo buttons are shown only on your computer (npm run dev), never on the live site. */}
+        {import.meta.env.DEV && (
+          <div className="demo-accounts">
+            <p className="muted small">Demo accounts (password: Password@123)</p>
+            <button type="button" className="chip" onClick={() => fillDemoAccount("student@smartlearn.dev")}>
+              Student
+            </button>
+            <button type="button" className="chip" onClick={() => fillDemoAccount("instructor@smartlearn.dev")}>
+              Instructor
+            </button>
+            <button type="button" className="chip" onClick={() => fillDemoAccount("admin@smartlearn.dev")}>
+              Admin
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

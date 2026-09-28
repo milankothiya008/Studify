@@ -178,6 +178,45 @@ The backend applies new migrations automatically when it starts.
 To start over with fresh demo data, delete the database and run the backend again:
 `DROP DATABASE smartlearn_db;` in psql or pgAdmin.
 
+## Deploying (free), with automatic updates on every push
+
+| Part | Service | Why |
+| --- | --- | --- |
+| Database | [Neon](https://neon.tech) | Free PostgreSQL |
+| Backend | [Render](https://render.com) | Runs `backend/Dockerfile`. Redeploys on every push |
+| Frontend | [Vercel](https://vercel.com) | Builds the React app. Redeploys on every push |
+| Videos & images | [Cloudinary](https://cloudinary.com) | **Required** in production: Render's disk is wiped on every deploy |
+
+1. **Neon**: create a project, then open **Connect** and choose the **.NET** format. Copy the
+   connection string (it looks like `Host=...;Database=...;Username=...;Password=...;SSL Mode=...`).
+2. **Render**: go to **New → Web Service** and pick this GitHub repo. Set **Language: Docker**,
+   **Root Directory: `backend`**, **Branch: `main`** and **Instance type: Free**. Add these environment variables:
+
+   | Key | Value |
+   | --- | --- |
+   | `ConnectionStrings__DefaultConnection` | the Neon connection string |
+   | `Jwt__Key` | a long random secret (32+ characters) |
+   | `Cloudinary__CloudName`, `Cloudinary__ApiKey`, `Cloudinary__ApiSecret` | your Cloudinary keys |
+   | `DemoPassword` | a strong password for the 3 demo accounts (including the admin) |
+   | `FrontendUrl` | your Vercel address (step 4) |
+
+   The `__` (two underscores) stands for a nested setting in `appsettings.json`.
+   After the deploy, open `https://<your-service>.onrender.com/api/courses` to check that it works.
+3. **Vercel**: go to **Add New → Project** and import this repo. Set **Root Directory: `frontend`**
+   (Vite is detected automatically). Add the environment variable `VITE_API_URL` = your Render address,
+   e.g. `https://smartlearn-api.onrender.com` (no `/api`, no trailing `/`).
+4. Copy your Vercel address (e.g. `https://smartlearn.vercel.app`) into Render's `FrontendUrl`
+   (no trailing `/`), then save. Render redeploys.
+
+From then on, `git push` to `main` rebuilds and redeploys both parts automatically.
+Database changes are applied when the backend starts, so commit your migration with the model change.
+
+Notes:
+- On the free plan, Render puts the backend to sleep after about 15 idle minutes. The next
+  visit then takes around a minute to wake it.
+- When you change a Vercel environment variable, redeploy for it to take effect.
+- The demo-account buttons on the login page appear only on your computer (`npm run dev`).
+
 ## Known limitations
 
 - Payments are simulated (see above).

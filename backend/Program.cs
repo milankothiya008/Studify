@@ -8,6 +8,14 @@ using SmartLearning.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Hosting sites like Render tell the app which port to use in the PORT variable.
+// On your own computer PORT is not set, so the app uses launchSettings.json (port 5000).
+string port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls("http://0.0.0.0:" + port);
+}
+
 // ---------------- Database (PostgreSQL) ----------------
 // The connection string is in appsettings.json -> "ConnectionStrings:DefaultConnection"
 string connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -72,7 +80,8 @@ using (IServiceScope scope = app.Services.CreateScope())
 {
     AppDbContext db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();   // creates the database and tables if they do not exist
-    DbSeeder.Seed(db);       // adds demo users, categories, plans and courses (only once)
+    string demoPassword = app.Configuration["DemoPassword"];
+    DbSeeder.Seed(db, demoPassword);   // adds demo users, categories, plans and courses (only once)
 }
 
 // ---------------- Request pipeline ----------------
@@ -81,5 +90,8 @@ app.UseCors("ReactApp");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+
+// Opening the backend address in a browser shows this, so you can see the API is running.
+app.MapGet("/", () => "SmartLearn API is running. Try /api/courses");
 
 app.Run();

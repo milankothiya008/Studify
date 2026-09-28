@@ -6,16 +6,15 @@ namespace SmartLearning.Api.Data
     // It does nothing if there is already at least one user.
     public static class DbSeeder
     {
-        // Demo password for all three demo accounts.
-        public const string DemoPassword = "Password@123";
-
         // Public sample files from Cloudinary's own "demo" account.
         // Your own uploads go to YOUR Cloudinary account (see appsettings.json).
         private const string DemoVideoDog = "https://res.cloudinary.com/demo/video/upload/dog.mp4";
         private const string DemoVideoElephants = "https://res.cloudinary.com/demo/video/upload/elephants.mp4";
         private const string DemoVideoTurtle = "https://res.cloudinary.com/demo/video/upload/sea_turtle.mp4";
 
-        public static void Seed(AppDbContext db)
+        // demoPassword = password of the three demo accounts. It comes from
+        // appsettings.json ("DemoPassword"). On a live server, set it to a secret value.
+        public static void Seed(AppDbContext db, string demoPassword)
         {
             if (db.Users.Any())
             {
@@ -29,7 +28,7 @@ namespace SmartLearning.Api.Data
             {
                 FullName = "Admin User",
                 Email = "admin@smartlearn.dev",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(DemoPassword),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
                 Role = Roles.Admin,
                 CreatedAt = now
             };
@@ -38,7 +37,7 @@ namespace SmartLearning.Api.Data
             {
                 FullName = "Grace Hopper",
                 Email = "instructor@smartlearn.dev",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(DemoPassword),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
                 Role = Roles.Instructor,
                 Headline = "Senior Software Engineer and Teacher",
                 Bio = "I have been building software for 15 years and love teaching beginners.",
@@ -49,7 +48,7 @@ namespace SmartLearning.Api.Data
             {
                 FullName = "Sam Student",
                 Email = "student@smartlearn.dev",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(DemoPassword),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(demoPassword),
                 Role = Roles.Student,
                 CreatedAt = now
             };
