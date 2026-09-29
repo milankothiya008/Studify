@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import api from "../api";
 import CourseCard from "../components/CourseCard";
+import InstructorCard from "../components/InstructorCard";
 import { CourseGridSkeleton } from "../components/Skeleton";
 import { useAuth } from "../AuthContext";
 import { formatPrice } from "../utils";
@@ -52,19 +53,22 @@ function HomePage() {
   const [newCourses, setNewCourses] = useState([]);
   const [categories, setCategories] = useState([]);
   const [cheapestPlan, setCheapestPlan] = useState(null);
+  const [instructors, setInstructors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
 
   useEffect(function () {
     async function loadData() {
       try {
-        // Promise.all runs the 4 requests at the same time, which is faster.
+        // Promise.all runs the 5 requests at the same time, which is faster.
         const results = await Promise.all([
           api.get("/courses?sort=popular&pageSize=8"),
           api.get("/courses?sort=newest&pageSize=4"),
           api.get("/categories"),
           api.get("/plans"),
+          api.get("/instructors?limit=4"),
         ]);
+        setInstructors(results[4].data);
         setPopularCourses(results[0].data.items);
         setNewCourses(results[1].data.items);
         setCategories(results[2].data);
@@ -78,6 +82,17 @@ function HomePage() {
     }
     loadData();
   }, []);
+
+  function handleFollowChange(instructorId, result) {
+    setInstructors(
+      instructors.map(function (instructor) {
+        if (instructor.id !== instructorId) {
+          return instructor;
+        }
+        return { ...instructor, isFollowing: result.isFollowing, followerCount: result.followerCount };
+      })
+    );
+  }
 
   function handleSearch(event) {
     event.preventDefault();
@@ -224,6 +239,30 @@ function HomePage() {
             <p className="muted">No courses yet. Instructors can publish the first one!</p>
           )}
         </section>
+
+        {/* ---------- Top instructors ---------- */}
+        {!loading && instructors.length > 0 && (
+          <section className="home-section">
+            <div className="section-heading">
+              <div>
+                <h2>Learn from top instructors</h2>
+                <p>Follow an instructor to hear about their new courses first.</p>
+              </div>
+            </div>
+            <div className="instructor-grid">
+              {instructors.map(function (instructor, index) {
+                return (
+                  <InstructorCard
+                    key={instructor.id}
+                    instructor={instructor}
+                    index={index}
+                    onFollowChange={handleFollowChange}
+                  />
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* ---------- Features ---------- */}
         <section className="home-section">

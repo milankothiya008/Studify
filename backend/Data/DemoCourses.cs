@@ -55,6 +55,7 @@ namespace SmartLearning.Api.Data
                 course.InstructorId = instructor.Id;
                 course.Category = FindOrCreateCategory(db, course.Category.Name);
                 course.IsPublished = true;
+                course.PublishedAt = now;
                 course.CreatedAt = now;
                 course.UpdatedAt = now;
 

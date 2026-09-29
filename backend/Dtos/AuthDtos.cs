@@ -40,6 +40,10 @@ namespace SmartLearning.Api.Dtos
         public string Headline { get; set; }
         public string Bio { get; set; }
         public string ProfileImageUrl { get; set; }
+        public string WebsiteUrl { get; set; }
+        public string LinkedInUrl { get; set; }
+        public string YouTubeUrl { get; set; }
+        public string TwitterUrl { get; set; }
     }
 
     public class AuthResponse
@@ -57,7 +61,21 @@ namespace SmartLearning.Api.Dtos
         [StringLength(150)]
         public string Headline { get; set; }
 
+        [StringLength(5000)]
         public string Bio { get; set; }
+
+        // Optional links. "example.com" is saved as "https://example.com".
+        [StringLength(300)]
+        public string WebsiteUrl { get; set; }
+
+        [StringLength(300)]
+        public string LinkedInUrl { get; set; }
+
+        [StringLength(300)]
+        public string YouTubeUrl { get; set; }
+
+        [StringLength(300)]
+        public string TwitterUrl { get; set; }
     }
 
     // Sent back after sign up: the account exists, but the email must be verified first.

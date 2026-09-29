@@ -15,6 +15,8 @@ import {
   Search,
   Shield,
   User,
+  UserCheck,
+  UserRound,
   X,
 } from "lucide-react";
 import { useAuth } from "../AuthContext";
@@ -170,9 +172,17 @@ function Navbar() {
                     <Link to="/wishlist">
                       <Heart size={18} /> Wishlist
                     </Link>
+                    <Link to="/following">
+                      <UserCheck size={18} /> Following
+                    </Link>
                     {isInstructor && (
                       <Link to="/instructor">
                         <LayoutDashboard size={18} /> Instructor dashboard
+                      </Link>
+                    )}
+                    {user.role === "Instructor" && (
+                      <Link to={"/instructors/" + user.id}>
+                        <UserRound size={18} /> My public profile
                       </Link>
                     )}
                     {isInstructor && (

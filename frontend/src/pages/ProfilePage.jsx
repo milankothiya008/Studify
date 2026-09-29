@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { AlertCircle, Camera, KeyRound, UserRound } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertCircle, Camera, ExternalLink, KeyRound, UserRound } from "lucide-react";
 import api, { getErrorMessage } from "../api";
 import { useAuth } from "../AuthContext";
 import { useToast } from "../ToastContext";
@@ -14,6 +15,12 @@ function ProfilePage() {
   const [fullName, setFullName] = useState(user.fullName);
   const [headline, setHeadline] = useState(user.headline || "");
   const [bio, setBio] = useState(user.bio || "");
+  const [links, setLinks] = useState({
+    websiteUrl: user.websiteUrl || "",
+    linkedInUrl: user.linkedInUrl || "",
+    youTubeUrl: user.youTubeUrl || "",
+    twitterUrl: user.twitterUrl || "",
+  });
   const [profileError, setProfileError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -28,13 +35,26 @@ function ProfilePage() {
     setProfileError("");
     setSavingProfile(true);
     try {
-      const response = await api.put("/account/profile", { fullName: fullName, headline: headline, bio: bio });
+      const response = await api.put("/account/profile", { fullName: fullName, headline: headline, bio: bio, ...links });
       setUser(response.data);
+      // The server cleans the links ("example.com" -> "https://example.com/"), show the saved version.
+      setLinks({
+        websiteUrl: response.data.websiteUrl || "",
+        linkedInUrl: response.data.linkedInUrl || "",
+        youTubeUrl: response.data.youTubeUrl || "",
+        twitterUrl: response.data.twitterUrl || "",
+      });
       showToast("Profile saved.");
     } catch (err) {
       setProfileError(getErrorMessage(err));
     }
     setSavingProfile(false);
+  }
+
+  function setLink(name, value) {
+    const copy = { ...links };
+    copy[name] = value;
+    setLinks(copy);
   }
 
   async function handlePhotoChange(event) {
@@ -105,6 +125,11 @@ function ProfilePage() {
                 {user.email} · {user.role}
               </p>
               <p className="muted small">Click the photo to change it (JPG, PNG or WEBP).</p>
+              {user.role === "Instructor" && (
+                <Link to={"/instructors/" + user.id} className="text-link small">
+                  View my public profile <ExternalLink size={14} />
+                </Link>
+              )}
             </div>
           </div>
 
@@ -135,9 +160,57 @@ function ProfilePage() {
               <label htmlFor="bio">Biography</label>
               <textarea id="bio" rows={5} value={bio} onChange={(e) => setBio(e.target.value)} />
               {user.role !== "Student" && (
-                <p className="field-hint">Your headline and biography are shown on your course pages.</p>
+                <p className="field-hint">Your headline and biography are shown on your course pages and public profile.</p>
               )}
             </div>
+
+            {user.role !== "Student" && (
+              <fieldset className="links-fieldset">
+                <legend>Links on your public profile (optional)</legend>
+                <div className="form-row">
+                  <div className="form-field">
+                    <label htmlFor="websiteUrl">Website</label>
+                    <input
+                      id="websiteUrl"
+                      value={links.websiteUrl}
+                      placeholder="yourwebsite.com"
+                      maxLength={300}
+                      onChange={(e) => setLink("websiteUrl", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="linkedInUrl">LinkedIn</label>
+                    <input
+                      id="linkedInUrl"
+                      value={links.linkedInUrl}
+                      placeholder="linkedin.com/in/your-name"
+                      maxLength={300}
+                      onChange={(e) => setLink("linkedInUrl", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="youTubeUrl">YouTube</label>
+                    <input
+                      id="youTubeUrl"
+                      value={links.youTubeUrl}
+                      placeholder="youtube.com/@your-channel"
+                      maxLength={300}
+                      onChange={(e) => setLink("youTubeUrl", e.target.value)}
+                    />
+                  </div>
+                  <div className="form-field">
+                    <label htmlFor="twitterUrl">X (Twitter)</label>
+                    <input
+                      id="twitterUrl"
+                      value={links.twitterUrl}
+                      placeholder="x.com/your-name"
+                      maxLength={300}
+                      onChange={(e) => setLink("twitterUrl", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </fieldset>
+            )}
 
             <button type="submit" className="btn btn-primary" disabled={savingProfile}>
               {savingProfile && <span className="btn-spinner"></span>}

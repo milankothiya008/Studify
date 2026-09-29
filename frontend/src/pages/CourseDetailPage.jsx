@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   AlertTriangle,
+  ArrowRight,
   Award,
   BarChart3,
   BookOpen,
@@ -11,7 +12,9 @@ import {
   ChevronDown,
   ClipboardCheck,
   Globe,
+  GraduationCap,
   Infinity as InfinityIcon,
+  MessageSquareQuote,
   PlayCircle,
   SearchX,
   Star,
@@ -27,6 +30,7 @@ import Avatar from "../components/Avatar";
 import Spinner from "../components/Spinner";
 import EmptyState from "../components/EmptyState";
 import WishlistButton from "../components/WishlistButton";
+import FollowButton from "../components/FollowButton";
 import { formatClock, formatDate, formatDuration, formatPrice, splitLines } from "../utils";
 
 // The course landing page (like a Udemy course page).
@@ -100,6 +104,12 @@ function CourseDetailPage() {
     }
   }
 
+  // Follow / unfollow from the "Your instructor" part.
+  function handleFollowChange(result) {
+    const instructor = { ...course.instructor, isFollowing: result.isFollowing, followerCount: result.followerCount };
+    setCourse({ ...course, instructor: instructor });
+  }
+
   function handleBuy() {
     if (!user) {
       navigate("/login", { state: { from: "/checkout/course/" + id } });
@@ -129,6 +139,8 @@ function CourseDetailPage() {
   const requirementItems = splitLines(course.requirements);
   // Enrolled with a subscription that has now expired:
   const subscriptionExpired = course.isEnrolled && !course.canWatch;
+  const instructor = course.instructor;
+  const instructorLink = "/instructors/" + course.instructorId;
   const allSectionsOpen = course.sections.length > 0 && course.sections.every((section) => openSections[section.id]);
 
   // How many reviews gave 5 stars, 4 stars ... (for the bars in the reviews section)
@@ -162,7 +174,10 @@ function CourseDetailPage() {
             </div>
             <p className="course-meta">
               <span>
-                Created by <strong>{course.instructorName}</strong>
+                Created by{" "}
+                <Link to={"/instructors/" + course.instructorId} className="header-link">
+                  {course.instructorName}
+                </Link>
               </span>
               <span>
                 <Calendar size={16} /> Updated {formatDate(course.updatedAt)}
@@ -288,12 +303,53 @@ function CourseDetailPage() {
           {/* ---------- Instructor ---------- */}
           <section className="course-section">
             <h2>Your instructor</h2>
-            <div className="card card-padded instructor-block">
-              <Avatar name={course.instructorName} imageUrl={course.instructorImageUrl} size={88} />
-              <div>
-                <h3>{course.instructorName}</h3>
-                {course.instructorHeadline && <p className="muted">{course.instructorHeadline}</p>}
-                {course.instructorBio && <p className="pre-line">{course.instructorBio}</p>}
+            <div className="card card-padded instructor-panel">
+              <div className="instructor-panel-top">
+                <Link to={instructorLink} className="avatar-ring" aria-label={"View the profile of " + course.instructorName}>
+                  <Avatar name={course.instructorName} imageUrl={course.instructorImageUrl} size={96} />
+                </Link>
+                <div>
+                  <Link to={instructorLink} className="instructor-name-link">
+                    <h3>{course.instructorName}</h3>
+                  </Link>
+                  {course.instructorHeadline && <p className="muted">{course.instructorHeadline}</p>}
+                  <ul className="instructor-panel-stats">
+                    <li>
+                      <Star size={16} className="star-icon filled" />
+                      {instructor.reviewCount > 0 ? instructor.averageRating.toFixed(1) + " instructor rating" : "New instructor"}
+                    </li>
+                    <li>
+                      <MessageSquareQuote size={16} /> {instructor.reviewCount}{" "}
+                      {instructor.reviewCount === 1 ? "review" : "reviews"}
+                    </li>
+                    <li>
+                      <Users size={16} /> {instructor.studentCount.toLocaleString("en-IN")}{" "}
+                      {instructor.studentCount === 1 ? "student" : "students"}
+                    </li>
+                    <li>
+                      <PlayCircle size={16} /> {instructor.courseCount} {instructor.courseCount === 1 ? "course" : "courses"}
+                    </li>
+                    <li>
+                      <GraduationCap size={16} /> {instructor.followerCount}{" "}
+                      {instructor.followerCount === 1 ? "follower" : "followers"}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {course.instructorBio && <p className="pre-line bio-text bio-clamped">{course.instructorBio}</p>}
+
+              <div className="instructor-panel-actions">
+                <Link to={instructorLink} className="btn btn-outline">
+                  View full profile <ArrowRight size={17} />
+                </Link>
+                {!course.isOwner && (
+                  <FollowButton
+                    instructorId={course.instructorId}
+                    isFollowing={instructor.isFollowing}
+                    onChange={handleFollowChange}
+                  />
+                )}
               </div>
             </div>
           </section>

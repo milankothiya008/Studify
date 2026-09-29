@@ -32,6 +32,7 @@ namespace SmartLearning.Api.Data
         public DbSet<QuizAttempt> QuizAttempts { get; set; }
         public DbSet<WishlistItem> WishlistItems { get; set; }
         public DbSet<Notification> Notifications { get; set; }
+        public DbSet<Follow> Follows { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -145,6 +146,23 @@ namespace SmartLearning.Api.Data
             // ---------- Notifications are read per user, newest first ----------
             modelBuilder.Entity<Notification>()
                 .HasIndex(n => new { n.UserId, n.CreatedAt });
+
+            // ---------- Follows: a user follows an instructor only once ----------
+            modelBuilder.Entity<Follow>()
+                .HasIndex(f => new { f.FollowerId, f.InstructorId })
+                .IsUnique();
+
+            modelBuilder.Entity<Follow>()
+                .HasOne(f => f.Follower)
+                .WithMany()
+                .HasForeignKey(f => f.FollowerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<Follow>()
+                .HasOne(f => f.Instructor)
+                .WithMany()
+                .HasForeignKey(f => f.InstructorId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // A plan that someone has bought cannot be deleted (deactivate it instead).
             modelBuilder.Entity<UserSubscription>()

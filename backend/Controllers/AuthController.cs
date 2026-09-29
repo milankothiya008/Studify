@@ -244,7 +244,11 @@ namespace SmartLearning.Api.Controllers
                 Role = user.Role,
                 Headline = user.Headline,
                 Bio = user.Bio,
-                ProfileImageUrl = user.ProfileImageUrl
+                ProfileImageUrl = user.ProfileImageUrl,
+                WebsiteUrl = user.WebsiteUrl,
+                LinkedInUrl = user.LinkedInUrl,
+                YouTubeUrl = user.YouTubeUrl,
+                TwitterUrl = user.TwitterUrl
             };
         }
     }

@@ -27,6 +27,12 @@ namespace SmartLearning.Api.Models
         public string ProfileImageUrl { get; set; }
         public string ProfileImagePublicId { get; set; }
 
+        // Links shown on the public instructor profile (all optional, always http or https).
+        public string WebsiteUrl { get; set; }
+        public string LinkedInUrl { get; set; }
+        public string YouTubeUrl { get; set; }
+        public string TwitterUrl { get; set; }
+
         public DateTime CreatedAt { get; set; }
 
         // Navigation properties

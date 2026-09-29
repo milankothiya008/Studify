@@ -81,6 +81,7 @@ namespace SmartLearning.Api.Controllers
             {
                 CourseId = course.Id,
                 Title = course.Title,
+                InstructorId = course.InstructorId,
                 InstructorName = course.Instructor.FullName,
                 Description = course.Description,
                 Sections = sections,

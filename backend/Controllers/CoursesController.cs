@@ -144,6 +144,10 @@ namespace SmartLearning.Api.Controllers
             List<Review> reviews = await _db.Reviews.Where(r => r.CourseId == id).ToListAsync();
             int studentCount = await _db.Enrollments.CountAsync(e => e.CourseId == id);
 
+            InstructorSummaryDto instructor = await InstructorMapper
+                .SelectSummaries(_db.Users.Where(u => u.Id == course.InstructorId), _db, userId)
+                .FirstAsync();
+
             List<SectionDto> sections = CourseMapper.BuildSections(course, canWatch, new List<LectureProgress>(), new List<QuizAttempt>());
 
             CourseDetailDto dto = new CourseDetailDto
@@ -168,6 +172,7 @@ namespace SmartLearning.Api.Controllers
                 InstructorHeadline = course.Instructor.Headline,
                 InstructorBio = course.Instructor.Bio,
                 InstructorImageUrl = course.Instructor.ProfileImageUrl,
+                Instructor = instructor,
                 AverageRating = reviews.Count > 0 ? reviews.Average(r => r.Rating) : 0,
                 ReviewCount = reviews.Count,
                 StudentCount = studentCount,

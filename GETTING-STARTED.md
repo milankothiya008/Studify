@@ -208,6 +208,8 @@ connect Razorpay or Stripe later.
 | POST / PUT / DELETE | `/api/instructor/sections/{id}/quiz`, `/api/instructor/quizzes/{id}` (+ `/questions`), `/api/instructor/quiz-questions/{id}` | instructor |
 | GET / POST | `/api/learn/quizzes/{id}`, `/api/learn/quizzes/{id}/attempts` | students with access |
 | GET / POST / DELETE | `/api/wishlist`, `/api/wishlist/ids`, `/api/wishlist/{courseId}` | logged in |
+| GET | `/api/instructors` (top instructors), `/api/instructors/{id}` (public profile), `/api/instructors/{id}/followers` | anyone |
+| GET / POST / DELETE | `/api/instructors/following`, `/api/instructors/{id}/follow` | logged in |
 | GET / POST | `/api/notifications`, `/api/notifications/{id}/read`, `/api/notifications/read-all` | logged in |
 | GET | `/api/certificates/{number}` | anyone |
 | POST / PUT / DELETE | `/api/categories/{id}`, `/api/plans/{id}` | admin |

@@ -113,6 +113,7 @@ namespace SmartLearning.Api.Data
                 ThumbnailUrl = "https://res.cloudinary.com/demo/image/upload/cld-sample-2.jpg",
                 PromoVideoUrl = DemoVideoDog,
                 IsPublished = true,
+                PublishedAt = now,
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -139,6 +140,7 @@ namespace SmartLearning.Api.Data
                 ThumbnailUrl = "https://res.cloudinary.com/demo/image/upload/cld-sample-4.jpg",
                 PromoVideoUrl = DemoVideoTurtle,
                 IsPublished = true,
+                PublishedAt = now,
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -167,6 +169,7 @@ namespace SmartLearning.Api.Data
                 ThumbnailUrl = "https://res.cloudinary.com/demo/image/upload/cld-sample-5.jpg",
                 PromoVideoUrl = DemoVideoElephants,
                 IsPublished = true,
+                PublishedAt = now,
                 CreatedAt = now,
                 UpdatedAt = now
             };

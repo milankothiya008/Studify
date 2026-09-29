@@ -141,3 +141,14 @@ export function getAllLectures(sections) {
   });
   return lectures;
 }
+
+// Short numbers for counters: 950 -> "950", 1250 -> "1.3K", 2400000 -> "2.4M"
+export function formatCount(number) {
+  if (number >= 1000000) {
+    return (number / 1000000).toFixed(1).replace(".0", "") + "M";
+  }
+  if (number >= 1000) {
+    return (number / 1000).toFixed(1).replace(".0", "") + "K";
+  }
+  return String(number);
+}

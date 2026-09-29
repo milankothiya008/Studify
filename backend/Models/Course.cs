@@ -36,6 +36,10 @@ namespace SmartLearning.Api.Models
         // Only published courses are visible to students.
         public bool IsPublished { get; set; }
 
+        // When the course was published for the first time. Followers of the instructor
+        // are told about a new course only once, not every time it is published again.
+        public DateTime? PublishedAt { get; set; }
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
 

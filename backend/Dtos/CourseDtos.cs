@@ -9,6 +9,7 @@ namespace SmartLearning.Api.Dtos
         public string Title { get; set; }
         public string Subtitle { get; set; }
         public string ThumbnailUrl { get; set; }
+        public int InstructorId { get; set; }
         public string InstructorName { get; set; }
         public string CategoryName { get; set; }
         public string Level { get; set; }
@@ -88,6 +89,9 @@ namespace SmartLearning.Api.Dtos
         public string InstructorHeadline { get; set; }
         public string InstructorBio { get; set; }
         public string InstructorImageUrl { get; set; }
+
+        // Students, rating, courses and followers of the instructor (for the "Your instructor" part).
+        public InstructorSummaryDto Instructor { get; set; }
 
         public double AverageRating { get; set; }
         public int ReviewCount { get; set; }

@@ -16,11 +16,13 @@ namespace SmartLearning.Api.Controllers
     {
         private readonly AppDbContext _db;
         private readonly FileStorageService _fileStorage;
+        private readonly NotificationService _notificationService;
 
-        public InstructorCoursesController(AppDbContext db, FileStorageService fileStorage)
+        public InstructorCoursesController(AppDbContext db, FileStorageService fileStorage, NotificationService notificationService)
         {
             _db = db;
             _fileStorage = fileStorage;
+            _notificationService = notificationService;
         }
 
         // GET api/instructor/dashboard  -> my courses with students, rating and revenue
@@ -297,9 +299,21 @@ namespace SmartLearning.Api.Controllers
                 return ErrorMessage(400, "Before publishing, please " + string.Join(", ", problems) + ".");
             }
 
+            // Followers hear about a course only the first time it goes live.
+            bool isFirstPublish = course.PublishedAt == null;
+
             course.IsPublished = true;
             course.UpdatedAt = DateTime.UtcNow;
+            if (isFirstPublish)
+            {
+                course.PublishedAt = DateTime.UtcNow;
+            }
             await _db.SaveChangesAsync();
+
+            if (isFirstPublish)
+            {
+                await _notificationService.OnCoursePublishedAsync(course);
+            }
 
             return Ok(new { message = "Your course is now live!" });
         }

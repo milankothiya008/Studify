@@ -382,7 +382,12 @@ function CoursePlayerPage() {
                     </>
                   )}
                   <h3>About this course</h3>
-                  <p className="muted">By {player.instructorName}</p>
+                  <p className="muted">
+                    By{" "}
+                    <Link to={"/instructors/" + player.instructorId} className="text-link">
+                      {player.instructorName}
+                    </Link>
+                  </p>
                   {player.description && <p className="pre-line">{player.description}</p>}
                 </>
               )}

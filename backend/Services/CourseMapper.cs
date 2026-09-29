@@ -17,6 +17,7 @@ namespace SmartLearning.Api.Services
                 Title = c.Title,
                 Subtitle = c.Subtitle,
                 ThumbnailUrl = c.ThumbnailUrl,
+                InstructorId = c.InstructorId,
                 InstructorName = c.Instructor.FullName,
                 CategoryName = c.Category.Name,
                 Level = c.Level,

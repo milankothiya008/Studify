@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AlertCircle, BookOpen, Eye, IndianRupee, Pencil, PlayCircle, Plus, Star, Users, X } from "lucide-react";
+import { AlertCircle, BookOpen, Eye, IndianRupee, Pencil, PlayCircle, Plus, Star, UserRound, Users, X } from "lucide-react";
 import api, { getErrorMessage } from "../../api";
+import { useAuth } from "../../AuthContext";
 import PageHeader from "../../components/PageHeader";
 import EmptyState from "../../components/EmptyState";
 import { SkeletonRows } from "../../components/Skeleton";
@@ -10,6 +11,7 @@ import { formatDate, formatMoney, formatPrice } from "../../utils";
 
 function InstructorDashboardPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [dashboard, setDashboard] = useState(null);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
@@ -63,6 +65,12 @@ function InstructorDashboardPage() {
   return (
     <div>
       <PageHeader title="Instructor dashboard" subtitle="Create courses, upload lectures and follow your students.">
+        {/* Admins without published courses have no public profile. */}
+        {user.role === "Instructor" && (
+          <Link to={"/instructors/" + user.id} className="btn btn-glass">
+            <UserRound size={18} /> Public profile
+          </Link>
+        )}
         <button className="btn btn-white" onClick={() => setShowCreate(true)}>
           <Plus size={18} /> New course
         </button>

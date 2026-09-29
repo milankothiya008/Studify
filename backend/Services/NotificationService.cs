@@ -111,6 +111,38 @@ namespace SmartLearning.Api.Services
             }
         }
 
+        // A course went live for the first time: tell everyone who follows its instructor (bell only).
+        public async Task OnCoursePublishedAsync(Course course)
+        {
+            try
+            {
+                User instructor = await _db.Users.FindAsync(course.InstructorId);
+                List<int> followerIds = await _db.Follows
+                    .Where(f => f.InstructorId == course.InstructorId)
+                    .Select(f => f.FollowerId)
+                    .ToListAsync();
+
+                DateTime now = DateTime.UtcNow;
+                foreach (int followerId in followerIds)
+                {
+                    _db.Notifications.Add(new Notification
+                    {
+                        UserId = followerId,
+                        Title = "New course from " + instructor.FullName,
+                        Message = "\"" + course.Title + "\" is now available.",
+                        Link = "/course/" + course.Id,
+                        IsRead = false,
+                        CreatedAt = now
+                    });
+                }
+                await _db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Could not notify the followers about course {CourseId}", course.Id);
+            }
+        }
+
         // Somebody answered a question: tell the person who asked (bell + email).
         public async Task OnAnsweredAsync(Question question, User answeredBy, string answerText)
         {

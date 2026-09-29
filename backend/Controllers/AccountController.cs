@@ -30,12 +30,55 @@ namespace SmartLearning.Api.Controllers
         {
             User user = await _db.Users.FindAsync(GetUserId());
 
+            // Check the links first, so nothing is saved when one of them is wrong.
+            string[] links = { request.WebsiteUrl, request.LinkedInUrl, request.YouTubeUrl, request.TwitterUrl };
+            string[] names = { "website", "LinkedIn", "YouTube", "X (Twitter)" };
+            string[] cleanLinks = new string[links.Length];
+            for (int i = 0; i < links.Length; i++)
+            {
+                if (!TryCleanUrl(links[i], out cleanLinks[i]))
+                {
+                    return ErrorMessage(400, "The " + names[i] + " link is not a valid web address.");
+                }
+            }
+
             user.FullName = request.FullName.Trim();
             user.Headline = request.Headline;
             user.Bio = request.Bio;
+            user.WebsiteUrl = cleanLinks[0];
+            user.LinkedInUrl = cleanLinks[1];
+            user.YouTubeUrl = cleanLinks[2];
+            user.TwitterUrl = cleanLinks[3];
             await _db.SaveChangesAsync();
 
             return Ok(AuthController.ToUserDto(user));
+        }
+
+        // "example.com" -> "https://example.com". Empty -> null.
+        // Only http and https links are allowed (never "javascript:" or other tricks).
+        private static bool TryCleanUrl(string text, out string url)
+        {
+            url = null;
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return true;
+            }
+
+            text = text.Trim();
+            if (!text.StartsWith("http://", StringComparison.OrdinalIgnoreCase) &&
+                !text.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+            {
+                text = "https://" + text;
+            }
+
+            bool isValid = Uri.TryCreate(text, UriKind.Absolute, out Uri uri)
+                && (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps)
+                && uri.Host.Contains('.');
+            if (isValid)
+            {
+                url = uri.ToString();
+            }
+            return isValid;
         }
 
         // POST api/account/photo   (form-data: file)
