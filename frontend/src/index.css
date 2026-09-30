@@ -6277,47 +6277,6 @@ a.avatar-ring:hover {
   text-decoration: underline;
 }
 
-/* ----- Followers ----- */
-.profile-followers-note {
-  margin: 0 0 18px;
-}
-
-.follower-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 14px;
-}
-
-.follower {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px;
-  color: var(--text);
-}
-
-.follower > div {
-  display: grid;
-  gap: 4px;
-  min-width: 0;
-}
-
-.follower strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.follower-link {
-  transition: transform 0.25s var(--ease), border-color 0.25s, box-shadow 0.25s;
-}
-
-.follower-link:hover {
-  transform: translateY(-3px);
-  border-color: var(--brand-300);
-  box-shadow: var(--shadow);
-}
-
 /* ----- Instructor cards (home page and Following page) ----- */
 .instructor-grid {
   display: grid;

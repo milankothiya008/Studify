@@ -125,27 +125,6 @@ namespace SmartLearning.Api.Controllers
             return Ok(profile);
         }
 
-        // GET api/instructors/5/followers
-        [HttpGet("{id:int}/followers")]
-        public async Task<ActionResult<List<FollowerDto>>> GetFollowers(int id)
-        {
-            List<FollowerDto> followers = await _db.Follows
-                .Where(f => f.InstructorId == id)
-                .OrderByDescending(f => f.CreatedAt)
-                .Take(200)
-                .Select(f => new FollowerDto
-                {
-                    Id = f.FollowerId,
-                    FullName = f.Follower.FullName,
-                    ProfileImageUrl = f.Follower.ProfileImageUrl,
-                    IsInstructor = f.Follower.Role == Roles.Instructor || f.Follower.CoursesTaught.Any(c => c.IsPublished),
-                    FollowedAt = f.CreatedAt
-                })
-                .ToListAsync();
-
-            return Ok(followers);
-        }
-
         // POST api/instructors/5/follow
         [Authorize]
         [HttpPost("{id:int}/follow")]
@@ -183,7 +162,7 @@ namespace SmartLearning.Api.Controllers
             {
                 User follower = await _db.Users.FindAsync(userId);
                 await _notificationService.NotifyAsync(id, "New follower",
-                    follower.FullName + " started following you.", "/instructors/" + id + "?tab=followers");
+                    follower.FullName + " started following you.", "/instructors/" + id);
             }
 
             return Ok(new FollowResultDto

@@ -26,7 +26,7 @@ import StarRating from "../components/StarRating";
 import { SkeletonBlock } from "../components/Skeleton";
 import { formatDate, timeAgo } from "../utils";
 
-const TABS = ["courses", "about", "reviews", "followers"];
+const TABS = ["courses", "about", "reviews"];
 
 const SORTS = {
   popular: { label: "Most popular", compare: (a, b) => b.studentCount - a.studentCount },
@@ -35,7 +35,7 @@ const SORTS = {
   "price-low": { label: "Price: low to high", compare: (a, b) => a.price - b.price },
 };
 
-// The public profile of an instructor: who they are, their courses, reviews and followers.
+// The public profile of an instructor: who they are, their courses and reviews.
 function InstructorProfilePage() {
   const { id } = useParams();
   const showToast = useToast();
@@ -43,7 +43,6 @@ function InstructorProfilePage() {
 
   const [profile, setProfile] = useState(null);
   const [error, setError] = useState("");
-  const [followers, setFollowers] = useState(null); // loaded when the Followers tab opens
   const [sort, setSort] = useState("popular");
   const [bioOpen, setBioOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -55,7 +54,6 @@ function InstructorProfilePage() {
   useEffect(
     function () {
       setProfile(null);
-      setFollowers(null);
       setError("");
       api
         .get("/instructors/" + id)
@@ -67,18 +65,6 @@ function InstructorProfilePage() {
         });
     },
     [id]
-  );
-
-  useEffect(
-    function () {
-      if (activeTab === "followers" && followers === null) {
-        api
-          .get("/instructors/" + id + "/followers")
-          .then((response) => setFollowers(response.data))
-          .catch((err) => showToast(getErrorMessage(err), "error"));
-      }
-    },
-    [activeTab, followers, id]
   );
 
   function openTab(tab) {
@@ -93,7 +79,6 @@ function InstructorProfilePage() {
 
   function handleFollowChange(result) {
     setProfile({ ...profile, isFollowing: result.isFollowing, followerCount: result.followerCount });
-    setFollowers(null); // load the list again next time
   }
 
   async function copyLink() {
@@ -226,9 +211,6 @@ function InstructorProfilePage() {
           </TabButton>
           <TabButton name="reviews" active={activeTab} onOpen={openTab} count={profile.reviewCount}>
             Reviews
-          </TabButton>
-          <TabButton name="followers" active={activeTab} onOpen={openTab} count={profile.followerCount}>
-            Followers
           </TabButton>
         </div>
 
@@ -393,73 +375,6 @@ function InstructorProfilePage() {
           </div>
         )}
 
-        {/* Followers */}
-        {activeTab === "followers" && (
-          <div className="tab-content" key="followers">
-            {followers === null ? (
-              <div className="follower-grid">
-                {[0, 1, 2, 3, 4, 5].map((i) => (
-                  <div key={i} className="follower card">
-                    <SkeletonBlock height={48} width={48} round />
-                    <div style={{ flex: 1 }}>
-                      <SkeletonBlock height={14} width="70%" />
-                      <SkeletonBlock height={10} width="45%" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : followers.length === 0 ? (
-              <EmptyState
-                icon={GraduationCap}
-                title="No followers yet"
-                text={
-                  profile.isMe
-                    ? "Students who follow you are told when you publish a new course."
-                    : "Be the first to follow " + firstName + " and hear about new courses first."
-                }
-              >
-                {!profile.isMe && (
-                  <FollowButton instructorId={profile.id} isFollowing={profile.isFollowing} onChange={handleFollowChange} />
-                )}
-              </EmptyState>
-            ) : (
-              <>
-                <p className="muted profile-followers-note">
-                  Followers are told whenever {profile.isMe ? "you publish" : firstName + " publishes"} a new course.
-                </p>
-                <div className="follower-grid">
-                  {followers.map(function (follower, index) {
-                    const content = (
-                      <>
-                        <Avatar name={follower.fullName} imageUrl={follower.profileImageUrl} size={48} />
-                        <div>
-                          <strong>{follower.fullName}</strong>
-                          <span className="muted small">
-                            {follower.isInstructor ? "Instructor · " : ""}Following since {formatDate(follower.followedAt)}
-                          </span>
-                        </div>
-                      </>
-                    );
-                    return follower.isInstructor ? (
-                      <Link
-                        key={follower.id}
-                        to={"/instructors/" + follower.id}
-                        className="follower card follower-link stagger-item"
-                        style={{ "--i": index }}
-                      >
-                        {content}
-                      </Link>
-                    ) : (
-                      <div key={follower.id} className="follower card stagger-item" style={{ "--i": index }}>
-                        {content}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </div>
-        )}
       </div>
     </div>
   );

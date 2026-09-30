@@ -48,18 +48,6 @@ namespace SmartLearning.Api.Dtos
         public string CourseTitle { get; set; }
     }
 
-    // One person in the followers list. Only the name and photo are public.
-    public class FollowerDto
-    {
-        public int Id { get; set; }
-        public string FullName { get; set; }
-        public string ProfileImageUrl { get; set; }
-
-        // Followers who are instructors themselves get a link to their profile.
-        public bool IsInstructor { get; set; }
-        public DateTime FollowedAt { get; set; }
-    }
-
     // Answer of follow / unfollow, so the page can update the button and the counter.
     public class FollowResultDto
     {
