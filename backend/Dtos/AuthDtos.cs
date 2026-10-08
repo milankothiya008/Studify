@@ -2,6 +2,22 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SmartLearning.Api.Dtos
 {
+    // The rule for every new password (sign up, reset, change), checked by ASP.NET's
+    // built-in [RegularExpression] validation before the controller code runs.
+    // Attributes only accept constants, so the rule is written once here as const strings.
+    public static class PasswordRules
+    {
+        // (?=.*[a-z])          at least one lowercase letter
+        // (?=.*[A-Z])          at least one uppercase letter
+        // (?=.*\d)             at least one number
+        // (?=.*[^a-zA-Z\d\s])  at least one special character, like @ # ! $
+        // .{8,128}             8 to 128 characters in total
+        public const string Pattern = @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d\s]).{8,128}$";
+
+        public const string Message =
+            "Password must be at least 8 characters and include an uppercase letter, a lowercase letter, a number and a special character.";
+    }
+
     public class RegisterRequest
     {
         [Required]
@@ -13,7 +29,7 @@ namespace SmartLearning.Api.Dtos
         public string Email { get; set; }
 
         [Required]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+        [RegularExpression(PasswordRules.Pattern, ErrorMessage = PasswordRules.Message)]
         public string Password { get; set; }
 
         // "Student" or "Instructor". Admin accounts cannot be created from the sign up page.
@@ -116,7 +132,7 @@ namespace SmartLearning.Api.Dtos
         public string Code { get; set; }
 
         [Required]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+        [RegularExpression(PasswordRules.Pattern, ErrorMessage = PasswordRules.Message)]
         public string NewPassword { get; set; }
     }
 
@@ -126,7 +142,7 @@ namespace SmartLearning.Api.Dtos
         public string CurrentPassword { get; set; }
 
         [Required]
-        [MinLength(6, ErrorMessage = "Password must be at least 6 characters.")]
+        [RegularExpression(PasswordRules.Pattern, ErrorMessage = PasswordRules.Message)]
         public string NewPassword { get; set; }
     }
 }

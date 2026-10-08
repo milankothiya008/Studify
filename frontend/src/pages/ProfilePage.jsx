@@ -246,7 +246,7 @@ function ProfilePage() {
               <label>New password</label>
               <PasswordInput
                 value={newPassword}
-                minLength={6}
+                minLength={8}
                 onChange={(e) => setNewPassword(e.target.value)}
                 autoComplete="new-password"
               />

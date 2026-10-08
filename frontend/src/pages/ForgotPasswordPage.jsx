@@ -138,7 +138,7 @@ function ForgotPasswordPage() {
           <PasswordInput
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
-            minLength={6}
+            minLength={8}
             autoComplete="new-password"
           />
         </div>
@@ -148,7 +148,7 @@ function ForgotPasswordPage() {
           <PasswordInput
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
-            minLength={6}
+            minLength={8}
             autoComplete="new-password"
           />
         </div>

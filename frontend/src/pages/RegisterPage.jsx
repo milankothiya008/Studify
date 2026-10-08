@@ -96,10 +96,10 @@ function RegisterPage() {
           <PasswordInput
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            minLength={6}
+            minLength={8}
             autoComplete="new-password"
           />
-          <p className="field-hint">At least 6 characters.</p>
+          <p className="field-hint">At least 8 characters, with an uppercase letter, a lowercase letter, a number and a special character.</p>
         </div>
 
         <button type="submit" className="btn btn-primary btn-block btn-large" disabled={working}>
