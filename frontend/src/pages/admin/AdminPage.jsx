@@ -29,6 +29,7 @@ function AdminPage() {
   const [stats, setStats] = useState(null);
   const [activeTab, setActiveTab] = useState("users");
   const [addingDemo, setAddingDemo] = useState(false);
+  const [addingActivity, setAddingActivity] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0); // changing it reloads the open tab
 
   function loadStats() {
@@ -53,6 +54,23 @@ function AdminPage() {
       showToast(getErrorMessage(err), "error");
     }
     setAddingDemo(false);
+  }
+
+  // Adds demo students and activity from backend/Data/DemoActivity.cs (runs only once).
+  async function handleAddDemoActivity() {
+    if (!window.confirm("Add demo students, purchases, reviews, Q&A and more? This runs only once.")) {
+      return;
+    }
+    setAddingActivity(true);
+    try {
+      const response = await api.post("/admin/demo-activity");
+      showToast(response.data.message);
+      loadStats();
+      setRefreshKey(refreshKey + 1);
+    } catch (err) {
+      showToast(getErrorMessage(err), "error");
+    }
+    setAddingActivity(false);
   }
 
   const statCards = stats
@@ -80,6 +98,10 @@ function AdminPage() {
         <button className="btn btn-white" onClick={handleAddDemoCourses} disabled={addingDemo}>
           {addingDemo ? <span className="btn-spinner btn-spinner-dark"></span> : <Sparkles size={18} />}
           Add demo courses
+        </button>
+        <button className="btn btn-glass" onClick={handleAddDemoActivity} disabled={addingActivity}>
+          {addingActivity ? <span className="btn-spinner"></span> : <Users size={18} />}
+          Add demo activity
         </button>
       </PageHeader>
 

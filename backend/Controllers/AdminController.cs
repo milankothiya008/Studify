@@ -106,6 +106,14 @@ namespace SmartLearning.Api.Controllers
             return Ok(new { added = added, message = added + word });
         }
 
+        // POST api/admin/demo-activity  -> demo students, purchases, reviews, Q&A ... (see Data/DemoActivity.cs)
+        [HttpPost("demo-activity")]
+        public ActionResult AddDemoActivity()
+        {
+            string message = DemoActivity.Add(_db);
+            return Ok(new { message = message });
+        }
+
         // GET api/admin/courses  -> every course, including drafts
         [HttpGet("courses")]
         public async Task<ActionResult<List<CourseCardDto>>> GetCourses()
